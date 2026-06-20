@@ -36,7 +36,7 @@ PLANS = {
     },
     "pro": {
         "name": "Pro",
-        "price": 29,
+        "price": 9,
         "period": "month",
         "features": [
             "До 25 агентов",
@@ -51,7 +51,7 @@ PLANS = {
     },
     "enterprise": {
         "name": "Enterprise",
-        "price": 99,
+        "price": 49,
         "period": "month",
         "features": [
             "Безлимитные агенты",
@@ -201,7 +201,7 @@ async def homepage():
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
             <a href="https://github.com/iirenat/mcp-hub-oauth">GitHub</a>
-            <a href="#" class="btn" onclick="alert('Coming soon!')">Get Started Free</a>
+            <a href="#pricing" class="btn">View Pricing</a>
         </nav>
     </header>
     
@@ -391,24 +391,21 @@ async def get_plans():
 
 @app.post("/api/checkout")
 async def create_checkout(req: CheckoutRequest):
-    """Создаёт сессию оплаты (заглушка для Stripe)."""
+    """Перенаправляет на Stripe Checkout."""
     if req.plan not in PLANS:
         raise HTTPException(status_code=400, detail="Invalid plan")
     
     plan = PLANS[req.plan]
     
-    # В реальности — создание Stripe Checkout Session
-    # stripe.checkout.Session.create(...)
-    
-    checkout_id = secrets.token_hex(16)
+    # TODO: Подключить реальный Stripe
+    # Пока — показываем сообщение
     return {
-        "checkout_id": checkout_id,
         "plan": req.plan,
         "amount": plan["price"],
         "currency": "usd",
-        "status": "pending",
-        "checkout_url": f"#checkout/{checkout_id}",  # В реальности — Stripe URL
-        "message": "Stripe integration coming soon. For now, this is a demo."
+        "status": "coming_soon",
+        "message": "Stripe checkout coming soon. Please star on GitHub for updates!",
+        "github_url": "https://github.com/iirenat/mcp-hub-oauth"
     }
 
 @app.get("/health")
