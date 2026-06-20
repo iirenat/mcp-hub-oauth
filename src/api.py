@@ -26,42 +26,69 @@ PLANS = {
         "name": "Free",
         "price": 0,
         "period": "month",
+        "description": "Для знакомства с продуктом",
         "features": [
-            "До 3 агентов",
-            "Базовый каталог MCP-серверов",
-            "OAuth 2.0",
-            "Email поддержка",
+            "1 агент",
+            "3 MCP-сервера",
+            "Базовый OAuth",
+            "100 записей аудита",
+            "Community поддержка",
         ],
-        "limits": {"agents": 3, "servers": 10, "audit_logs": 100}
+        "limits": {"agents": 1, "servers": 3, "audit_logs": 100}
     },
     "pro": {
         "name": "Pro",
-        "price": 9,
+        "price": 6.99,
         "period": "month",
+        "description": "Для небольших команд и стартапов",
         "features": [
-            "До 25 агентов",
-            "Полный каталог MCP-серверов",
+            "До 10 агентов",
+            "50 MCP-серверов",
             "OAuth 2.0 + SSO",
-            "Аудит логирование",
+            "Полный аудит (10K записей)",
             "Rate limiting",
-            "Приоритетная поддержка",
+            "Email поддержка",
+            "Базовая аналитика",
         ],
-        "limits": {"agents": 25, "servers": 100, "audit_logs": 10000},
+        "limits": {"agents": 10, "servers": 50, "audit_logs": 10000},
         "popular": True
     },
     "enterprise": {
         "name": "Enterprise",
-        "price": 49,
+        "price": 14.99,
         "period": "month",
+        "description": "Для компаний с серьёзными требованиями",
+        "features": [
+            "До 100 агентов",
+            "Безлимитные MCP-серверы",
+            "OAuth + SSO + SAML",
+            "Безлимитный аудит",
+            "Rate limiting",
+            "Приоритетная поддержка (24/7)",
+            "Расширенная аналитика",
+            "SLA 99.9%",
+            "Кастомизация бренда",
+        ],
+        "limits": {"agents": 100, "servers": -1, "audit_logs": -1}
+    },
+    "ultra": {
+        "name": "Ultra",
+        "price": 99.99,
+        "period": "month",
+        "description": "Для enterprise с максимальными требованиями",
         "features": [
             "Безлимитные агенты",
-            "Полный каталог + кастомные серверы",
-            "OAuth 2.0 + SSO + SAML",
-            "Полный аудит",
-            "Rate limiting",
-            "SLA 99.9%",
+            "Безлимитные MCP-серверы",
+            "OAuth + SSO + SAML + LDAP",
+            "Безлимитный аудит + экспорт",
+            "Rate limiting + quotas",
             "Выделенный менеджер",
-            "Кастомизация",
+            "SLA 99.99%",
+            "Полная кастомизация",
+            "On-premise установка",
+            "Интеграция с SIEM",
+            "Compliance reports (SOC2, GDPR)",
+            "Training для команды",
         ],
         "limits": {"agents": -1, "servers": -1, "audit_logs": -1}
     }
@@ -278,41 +305,58 @@ async def homepage():
         <div class="pricing-grid">
             <div class="pricing-card">
                 <h3>Free</h3>
+                <p style="color:var(--text-muted);font-size:14px;margin:4px 0 16px;">Для знакомства</p>
                 <div class="price">$0<span>/month</span></div>
                 <ul>
-                    <li>Up to 3 agents</li>
-                    <li>Basic MCP server catalog</li>
-                    <li>OAuth 2.0</li>
-                    <li>Email support</li>
+                    <li>1 агент</li>
+                    <li>3 MCP-сервера</li>
+                    <li>Базовый OAuth</li>
+                    <li>100 записей аудита</li>
                 </ul>
-                <a href="#" class="btn btn-outline" onclick="alert('Create account coming soon!')">Get Started</a>
+                <a href="#" class="btn btn-outline" onclick="alert('GitHub star = free access!')">Get Started</a>
             </div>
             <div class="pricing-card popular">
                 <div class="popular-badge">Most Popular</div>
                 <h3>Pro</h3>
-                <div class="price">$29<span>/month</span></div>
+                <p style="color:var(--text-muted);font-size:14px;margin:4px 0 16px;">Для команд</p>
+                <div class="price">$6.99<span>/month</span></div>
                 <ul>
-                    <li>Up to 25 agents</li>
-                    <li>Full MCP server catalog</li>
-                    <li>OAuth 2.0 + SSO</li>
-                    <li>Audit logging</li>
+                    <li>До 10 агентов</li>
+                    <li>50 MCP-серверов</li>
+                    <li>OAuth + SSO</li>
+                    <li>Аудит (10K записей)</li>
                     <li>Rate limiting</li>
-                    <li>Priority support</li>
+                    <li>Email поддержка</li>
                 </ul>
-                <a href="#" class="btn" onclick="alert('Stripe checkout coming soon!')">Start Free Trial</a>
+                <a href="#" class="btn" onclick="alert('Stripe coming soon!')">Start Free Trial</a>
             </div>
             <div class="pricing-card">
                 <h3>Enterprise</h3>
-                <div class="price">$99<span>/month</span></div>
+                <p style="color:var(--text-muted);font-size:14px;margin:4px 0 16px;">Для компаний</p>
+                <div class="price">$14.99<span>/month</span></div>
                 <ul>
-                    <li>Unlimited agents</li>
-                    <li>Custom MCP servers</li>
+                    <li>До 100 агентов</li>
+                    <li>Безлимитные серверы</li>
                     <li>OAuth + SSO + SAML</li>
-                    <li>Full audit trail</li>
+                    <li>Безлимитный аудит</li>
                     <li>SLA 99.9%</li>
-                    <li>Dedicated manager</li>
+                    <li>Приоритетная поддержка</li>
                 </ul>
-                <a href="#" class="btn btn-outline" onclick="alert('Contact sales coming soon!')">Contact Sales</a>
+                <a href="#" class="btn btn-outline" onclick="alert('Contact: mcp-hub@example.com')">Contact Sales</a>
+            </div>
+            <div class="pricing-card">
+                <h3>Ultra</h3>
+                <p style="color:var(--text-muted);font-size:14px;margin:4px 0 16px;">Максимум</p>
+                <div class="price">$99.99<span>/month</span></div>
+                <ul>
+                    <li>Безлимитные агенты</li>
+                    <li>On-premise установка</li>
+                    <li>SLA 99.99%</li>
+                    <li>Выделенный менеджер</li>
+                    <li>Compliance (SOC2, GDPR)</li>
+                    <li>Training для команды</li>
+                </ul>
+                <a href="#" class="btn btn-outline" onclick="alert('Contact: mcp-hub@example.com')">Contact Sales</a>
             </div>
         </div>
     </section>
