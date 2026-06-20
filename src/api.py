@@ -9,6 +9,11 @@ import hashlib
 import secrets
 import json
 import os
+import sys
+
+# Добавляем src в путь
+sys.path.insert(0, os.path.dirname(__file__))
+from models import RegistrationService
 
 app = FastAPI(title="MCP Hub with OAuth", version="2.0.0")
 
@@ -379,7 +384,43 @@ async def homepage():
 </body>
 </html>"""
 
+# === Auth Models ===
+class RegisterRequest(BaseModel):
+    email: str
+    password: str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+# === Auth Service ===
+auth_service = RegistrationService()
+
 # === API ===
+
+@app.post("/api/auth/register")
+async def register(req: RegisterRequest):
+    try:
+        user = auth_service.register(req.email, req.password)
+        return {"status": "ok", "user": {"id": user["id"], "email": user["email"], "plan": user["plan"]}}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/auth/login")
+async def login(req: LoginRequest):
+    try:
+        user = auth_service.login(req.email, req.password)
+        return {"status": "ok", "user": {"id": user["id"], "email": user["email"], "plan": user["plan"], "api_key": user["api_key"]}}
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+
+@app.get("/api/users/me")
+async def get_me(user_id: str):
+    user = auth_service.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    sub = auth_service.get_sub(user_id)
+    return {"user": user, "subscription": sub}
 
 @app.get("/api/servers")
 async def list_servers(category: str = None, search: str = None):
