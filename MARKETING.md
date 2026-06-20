@@ -1,22 +1,23 @@
-# MCP Hub — Marketing Materials
+# MCP Hub — Marketing Posts
 
 ## Product Hunt Title
 **MCP Hub with OAuth — Enterprise security for AI agents**
 
-## Product Hunt Description
+## Product Hunt Description (short)
 ```
-MCP Hub is a centralized panel for managing all AI agents in your company.
+MCP Hub = one panel for all your AI agents.
 
-✅ MCP Server Catalog — Browse and connect to any MCP server
-✅ OAuth 2.0 — Secure authorization with enterprise SSO
-✅ Access Control — Role-based permissions for each agent
-✅ Audit Log — Track every request and action
-✅ Rate Limiting — Prevent abuse and control costs
-✅ Monitoring — Real-time health checks
+✅ MCP Server Catalog
+✅ OAuth 2.0 + SSO
+✅ Role-based access control
+✅ Full audit logging
+✅ Rate limiting
+✅ Real-time monitoring
 
-Built for companies using 10+ AI agents who need security and control.
+Open source. Self-host free. Enterprise hosting coming soon.
 
-Open source. Free to self-host. Enterprise hosting coming soon.
+GitHub: https://github.com/iirenat/mcp-hub-oauth
+Demo: https://srv-d8r907e7r5hc73e2sngg.onrender.com
 ```
 
 ## Reddit Post (r/LocalLLaMA)
@@ -27,37 +28,39 @@ Hey r/LocalLLaMA!
 
 I've been working on MCP Hub — a centralized management panel for AI agents with enterprise-grade security.
 
-The problem: Companies are using 10-50 AI agents (via MCP protocol). Each has its own API keys, tokens, and access rights. There's no unified place to manage them all.
+The problem: Companies using 10+ AI agents (via MCP protocol). Each has its own API keys, tokens, access rights. No unified management.
 
 The solution: MCP Hub provides:
-- MCP Server Catalog with search
-- OAuth 2.0 authorization
-- Role-based access control
+- MCP Server Catalog with search & filtering
+- OAuth 2.0 authorization + SSO
+- Role-based access control (RBAC)
 - Full audit logging
-- Rate limiting and monitoring
+- Rate limiting & monitoring
 
-Tech stack: Python + FastAPI + PostgreSQL
+Tech: Python + FastAPI + Docker
 
-GitHub: [link]
-Live demo: [link]
+GitHub: https://github.com/iirenat/mcp-hub-oauth
+Demo: https://srv-d8r9r5hc73e2sngg.onrender.com
 
-Would love to hear your feedback! What features would you want in an MCP management tool?
+Open source. Free to self-host.
+
+Feedback welcome!
 ```
 
 ## Twitter/X Post
 ```
-🚀 Just launched MCP Hub — open source panel for managing AI agents with OAuth
+🚀 MCP Hub — open source panel for managing AI agents with OAuth 2.0
 
 ✅ MCP Server Catalog
-✅ OAuth 2.0 SSO
-✅ Role-based access
+✅ OAuth 2.0 + SSO
+✅ RBAC
 ✅ Audit logs
 ✅ Rate limiting
 
-Built for companies using 10+ AI agents who need security.
+Open source. Self-host free.
 
-🔗 GitHub: [link]
-🔗 Demo: [link]
+🔗 GitHub: https://github.com/iirenat/mcp-hub-oauth
+🔗 Demo: https://srv-d8r907e7r5hc73e2sngg.onrender.com
 
-#AI #MCP #OpenSource #Security
+#AI #MCP #OpenSource #Security #AIAgents
 ```

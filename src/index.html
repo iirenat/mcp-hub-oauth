@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Hub — Enterprise Security for AI Agents</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0f; color: #fff; min-height: 100vh; }
+        
+        /* Header */
+        header { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a2e; }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
+        .logo-text { font-size: 24px; font-weight: 700; }
+        .logo-tag { font-size: 12px; color: #6366f1; background: #1a1a2e; padding: 4px 8px; border-radius: 6px; margin-left: 8px; }
+        nav a { color: #9ca3af; text-decoration: none; margin-left: 24px; font-size: 14px; }
+        nav a:hover { color: #fff; }
+        .btn { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; }
+        .btn:hover { opacity: 0.9; }
+        
+        /* Hero */
+        .hero { padding: 80px 40px; text-align: center; max-width: 900px; margin: 0 auto; }
+        .hero h1 { font-size: 56px; font-weight: 800; line-height: 1.1; margin-bottom: 24px; background: linear-gradient(135deg, #fff, #9ca3af); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 20px; color: #9ca3af; margin-bottom: 40px; line-height: 1.6; }
+        .hero-buttons { display: flex; gap: 16px; justify-content: center; }
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 16px; }
+        .btn-secondary { background: #1a1a2e; color: #fff; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 16px; border: 1px solid #2a2a3e; }
+        
+        /* Features */
+        .features { padding: 80px 40px; }
+        .features h2 { text-align: center; font-size: 36px; margin-bottom: 60px; }
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; max-width: 1200px; margin: 0 auto; }
+        .feature-card { background: #111118; border: 1px solid #1a1a2e; border-radius: 16px; padding: 32px; }
+        .feature-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 20px; }
+        .feature-card h3 { font-size: 20px; margin-bottom: 12px; }
+        .feature-card p { color: #9ca3af; line-height: 1.6; }
+        
+        /* Stats */
+        .stats { padding: 60px 40px; background: #111118; border-top: 1px solid #1a1a2e; border-bottom: 1px solid #1a1a2e; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; max-width: 1000px; margin: 0 auto; text-align: center; }
+        .stat h3 { font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat p { color: #9ca3af; margin-top: 8px; }
+        
+        /* CTA */
+        .cta { padding: 80px 40px; text-align: center; }
+        .cta h2 { font-size: 40px; margin-bottom: 20px; }
+        .cta p { color: #9ca3af; font-size: 18px; margin-bottom: 40px; }
+        
+        /* Footer */
+        footer { padding: 40px; border-top: 1px solid #1a1a2e; display: flex; justify-content: space-between; align-items: center; }
+        footer p { color: #6b7280; font-size: 14px; }
+        footer a { color: #6366f1; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <div class="logo-icon">M</div>
+            <span class="logo-text">MCP Hub</span>
+            <span class="logo-tag">v1.0</span>
+        </div>
+        <nav>
+            <a href="#features">Features</a>
+            <a href="https://github.com/iirenat/mcp-hub-oauth">GitHub</a>
+            <a href="#" class="btn">Get Started</a>
+        </nav>
+    </header>
+    
+    <section class="hero">
+        <h1>Enterprise Security for AI Agents</h1>
+        <p>One panel to manage all your AI agents. OAuth 2.0, role-based access, audit logging, and real-time monitoring. Built for companies using 10+ AI agents.</p>
+        <div class="hero-buttons">
+            <a href="https://github.com/iirenat/mcp-hub-oauth" class="btn-primary">⭐ Star on GitHub</a>
+            <a href="#features" class="btn-secondary">Learn More</a>
+        </div>
+    </section>
+    
+    <section class="features" id="features">
+        <h2>Everything you need</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📂</div>
+                <h3>MCP Server Catalog</h3>
+                <p>Browse, search, and connect to any MCP server. GitHub, Slack, Notion, PostgreSQL, and more.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>OAuth 2.0 + SSO</h3>
+                <p>Enterprise-grade authentication. Connect with Google, GitHub, or your SSO provider.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Role-Based Access</h3>
+                <p>Control who can access which agents. Admin, developer, viewer roles.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📝</div>
+                <h3>Audit Logging</h3>
+                <p>Track every request and action. Full history of who did what and when.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⏱️</div>
+                <h3>Rate Limiting</h3>
+                <p>Prevent abuse and control costs. Set per-user and per-agent limits.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Real-Time Monitoring</h3>
+                <p>Live dashboards, health checks, and alerts. Know when something goes wrong.</p>
+            </div>
+        </div>
+    </section>
+    
+    <section class="stats">
+        <div class="stats-grid">
+            <div class="stat">
+                <h3>8+</h3>
+                <p>Pre-configured MCP Servers</p>
+            </div>
+            <div class="stat">
+                <h3>OAuth</h3>
+                <p>Enterprise SSO Support</p>
+            </div>
+            <div class="stat">
+                <h3>RBAC</h3>
+                <p>Role-Based Access Control</p>
+            </div>
+            <div class="stat">
+                <h3>MIT</h3>
+                <p>Open Source License</p>
+            </div>
+        </div>
+    </section>
+    
+    <section class="cta">
+        <h2>Ready to secure your AI agents?</h2>
+        <p>Self-host for free or use our enterprise hosting.</p>
+        <a href="https://github.com/iirenat/mcp-hub-oauth" class="btn-primary">Get Started — Free</a>
+    </section>
+    
+    <footer>
+        <p>© 2026 MCP Hub. Open source under MIT license.</p>
+        <a href="https://github.com/iirenat/mcp-hub-oauth">GitHub</a>
+    </footer>
+</body>
+</html>
