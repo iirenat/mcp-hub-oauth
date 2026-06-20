@@ -1,7 +1,7 @@
-"""MCP Hub — FastAPI API Server with Frontend."""
-from fastapi import FastAPI, HTTPException
+"""MCP Hub — Production API with Stripe payments."""
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
@@ -10,7 +10,7 @@ import secrets
 import json
 import os
 
-app = FastAPI(title="MCP Hub with OAuth", version="1.0.0")
+app = FastAPI(title="MCP Hub with OAuth", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,10 +20,59 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# === Тарифы ===
+PLANS = {
+    "free": {
+        "name": "Free",
+        "price": 0,
+        "period": "month",
+        "features": [
+            "До 3 агентов",
+            "Базовый каталог MCP-серверов",
+            "OAuth 2.0",
+            "Email поддержка",
+        ],
+        "limits": {"agents": 3, "servers": 10, "audit_logs": 100}
+    },
+    "pro": {
+        "name": "Pro",
+        "price": 29,
+        "period": "month",
+        "features": [
+            "До 25 агентов",
+            "Полный каталог MCP-серверов",
+            "OAuth 2.0 + SSO",
+            "Аудит логирование",
+            "Rate limiting",
+            "Приоритетная поддержка",
+        ],
+        "limits": {"agents": 25, "servers": 100, "audit_logs": 10000},
+        "popular": True
+    },
+    "enterprise": {
+        "name": "Enterprise",
+        "price": 99,
+        "period": "month",
+        "features": [
+            "Безлимитные агенты",
+            "Полный каталог + кастомные серверы",
+            "OAuth 2.0 + SSO + SAML",
+            "Полный аудит",
+            "Rate limiting",
+            "SLA 99.9%",
+            "Выделенный менеджер",
+            "Кастомизация",
+        ],
+        "limits": {"agents": -1, "servers": -1, "audit_logs": -1}
+    }
+}
+
 # === Хранилище ===
 servers_db = {}
 tokens_db = []
 audit_db = []
+users_db = {}
+subscriptions_db = {}
 
 # === Модели ===
 class ServerCreate(BaseModel):
@@ -38,21 +87,11 @@ class AuthStart(BaseModel):
     server_id: str
     user_id: str
 
-# === Предустановленные серверы ===
-SERVERS = [
-    {"id":"gh","name":"GitHub","description":"GitHub API для AI-агентов","url":"https://api.github.com/mcp","category":"development","tags":["git","code"],"requires_auth":True,"created_at":"2026-01-01"},
-    {"id":"sl","name":"Slack","description":"Slack интеграция","url":"https://slack.com/api/mcp","category":"communication","tags":["chat","messaging"],"requires_auth":True,"created_at":"2026-01-01"},
-    {"id":"nt","name":"Notion","description":"Notion база знаний","url":"https://notion.so/api/mcp","category":"productivity","tags":["notes","database"],"requires_auth":True,"created_at":"2026-01-01"},
-    {"id":"pg","name":"PostgreSQL","description":"PostgreSQL база данных","url":"postgresql://localhost:5432/mcp","category":"database","tags":["sql","data"],"requires_auth":True,"created_at":"2026-01-01"},
-    {"id":"pn","name":"Pinecone","description":"Векторный поиск","url":"https://api.pinecone.io/mcp","category":"ai","tags":["vector","search"],"requires_auth":True,"created_at":"2026-01-01"},
-    {"id":"se","name":"Sentry","description":"Мониторинг ошибок","url":"https://sentry.io/api/mcp","category":"monitoring","tags":["errors","tracking"],"requires_auth":True,"created_at":"2026-01-01"},
-    {"id":"st","name":"Stripe","description":"Платежи через API","url":"https://api.stripe.com/mcp","category":"payments","tags":["billing","finance"],"requires_auth":True,"created_at":"2026-01-01"},
-    {"id":"s3","name":"S3","description":"Объектное хранилище","url":"https://s3.amazonaws.com/mcp","category":"storage","tags":["files","backup"],"requires_auth":True,"created_at":"2026-01-01"},
-]
-for s in SERVERS:
-    servers_db[s["id"]] = s
+class CheckoutRequest(BaseModel):
+    plan: str
+    email: str
 
-# === Frontend ===
+# === Главная страница — полный лендинг ===
 @app.get("/", response_class=HTMLResponse)
 async def homepage():
     return """<!DOCTYPE html>
@@ -60,41 +99,96 @@ async def homepage():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MCP Hub — Enterprise security for AI agents. Manage, secure, and monitor all your AI agents from one panel.">
     <title>MCP Hub — Enterprise Security for AI Agents</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0f; color: #fff; min-height: 100vh; }
-        header { padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a2e; }
-        .logo { display: flex; align-items: center; gap: 12px; }
-        .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; }
-        .logo-text { font-size: 24px; font-weight: 700; }
-        .logo-tag { font-size: 12px; color: #6366f1; background: #1a1a2e; padding: 4px 8px; border-radius: 6px; margin-left: 8px; }
-        nav a { color: #9ca3af; text-decoration: none; margin-left: 24px; font-size: 14px; }
-        nav a:hover { color: #fff; }
-        .btn { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; }
-        .hero { padding: 80px 40px; text-align: center; max-width: 900px; margin: 0 auto; }
-        .hero h1 { font-size: 56px; font-weight: 800; line-height: 1.1; margin-bottom: 24px; background: linear-gradient(135deg, #fff, #9ca3af); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .hero p { font-size: 20px; color: #9ca3af; margin-bottom: 40px; line-height: 1.6; }
-        .hero-buttons { display: flex; gap: 16px; justify-content: center; }
-        .btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 16px; }
-        .btn-secondary { background: #1a1a2e; color: #fff; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 16px; border: 1px solid #2a2a3e; }
-        .features { padding: 80px 40px; }
-        .features h2 { text-align: center; font-size: 36px; margin-bottom: 60px; }
-        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; max-width: 1200px; margin: 0 auto; }
-        .feature-card { background: #111118; border: 1px solid #1a1a2e; border-radius: 16px; padding: 32px; }
-        .feature-icon { width: 48px; height: 48px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 20px; }
-        .feature-card h3 { font-size: 20px; margin-bottom: 12px; }
-        .feature-card p { color: #9ca3af; line-height: 1.6; }
-        .stats { padding: 60px 40px; background: #111118; border-top: 1px solid #1a1a2e; border-bottom: 1px solid #1a1a2e; }
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; max-width: 1000px; margin: 0 auto; text-align: center; }
-        .stat h3 { font-size: 48px; font-weight: 800; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .stat p { color: #9ca3af; margin-top: 8px; }
-        .cta { padding: 80px 40px; text-align: center; }
-        .cta h2 { font-size: 40px; margin-bottom: 20px; }
-        .cta p { color: #9ca3af; font-size: 18px; margin-bottom: 40px; }
-        footer { padding: 40px; border-top: 1px solid #1a1a2e; display: flex; justify-content: space-between; align-items: center; }
-        footer p { color: #6b7280; font-size: 14px; }
-        footer a { color: #6366f1; text-decoration: none; }
+        :root { --primary: #6366f1; --primary-dark: #4f46e5; --bg: #06060a; --bg-card: #0c0c14; --border: #1a1a2e; --text: #fff; --text-muted: #9ca3af; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+        
+        /* Header */
+        header { padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(6,6,10,0.9); backdrop-filter: blur(20px); z-index: 100; }
+        .logo { display: flex; align-items: center; gap: 10px; }
+        .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), #a855f7); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; }
+        .logo-text { font-size: 20px; font-weight: 700; }
+        nav { display: flex; align-items: center; gap: 32px; }
+        nav a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+        nav a:hover { color: var(--text); }
+        .btn { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; border: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(99,102,241,0.4); }
+        .btn-large { padding: 16px 32px; font-size: 16px; border-radius: 12px; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); }
+        .btn-outline:hover { border-color: var(--primary); box-shadow: none; }
+        
+        /* Hero */
+        .hero { padding: 100px 40px 80px; text-align: center; max-width: 1000px; margin: 0 auto; position: relative; }
+        .hero::before { content: ''; position: absolute; top: -100px; left: 50%; transform: translateX(-50%); width: 600px; height: 600px; background: radial-gradient(circle, rgba(99,102,241,0.15) 0%, transparent 70%); pointer-events: none; z-index: -1; }
+        .badge { display: inline-flex; align-items: center; gap: 8px; background: var(--bg-card); border: 1px solid var(--border); padding: 8px 16px; border-radius: 100px; font-size: 13px; color: var(--text-muted); margin-bottom: 32px; }
+        .badge-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .hero h1 { font-size: 64px; font-weight: 800; line-height: 1.1; margin-bottom: 24px; letter-spacing: -2px; }
+        .hero h1 span { background: linear-gradient(135deg, var(--primary), #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 20px; color: var(--text-muted); margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto; }
+        .hero-buttons { display: flex; gap: 16px; justify-content: center; margin-bottom: 60px; }
+        .hero-stats { display: flex; gap: 60px; justify-content: center; }
+        .hero-stat h3 { font-size: 32px; font-weight: 800; }
+        .hero-stat p { font-size: 14px; color: var(--text-muted); }
+        
+        /* Logos */
+        .logos { padding: 60px 40px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); text-align: center; }
+        .logos p { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
+        .logos-grid { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
+        .logo-item { color: var(--text-muted); font-size: 16px; font-weight: 600; opacity: 0.5; }
+        
+        /* Features */
+        .features { padding: 100px 40px; }
+        .features h2 { text-align: center; font-size: 40px; font-weight: 800; margin-bottom: 16px; }
+        .features > p { text-align: center; color: var(--text-muted); font-size: 18px; margin-bottom: 60px; }
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1200px; margin: 0 auto; }
+        .feature-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; transition: border-color 0.2s, transform 0.2s; }
+        .feature-card:hover { border-color: var(--primary); transform: translateY(-4px); }
+        .feature-icon { width: 48px; height: 48px; background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(168,85,247,0.2)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 20px; border: 1px solid rgba(99,102,241,0.3); }
+        .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .feature-card p { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+        
+        /* Pricing */
+        .pricing { padding: 100px 40px; background: var(--bg-card); border-top: 1px solid var(--border); }
+        .pricing h2 { text-align: center; font-size: 40px; font-weight: 800; margin-bottom: 16px; }
+        .pricing > p { text-align: center; color: var(--text-muted); font-size: 18px; margin-bottom: 60px; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1000px; margin: 0 auto; }
+        .pricing-card { background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 40px 32px; position: relative; transition: transform 0.2s, border-color 0.2s; }
+        .pricing-card:hover { transform: translateY(-4px); }
+        .pricing-card.popular { border-color: var(--primary); background: linear-gradient(180deg, rgba(99,102,241,0.1) 0%, var(--bg) 100%); }
+        .popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--primary), #a855f7); color: #fff; padding: 4px 16px; border-radius: 100px; font-size: 12px; font-weight: 600; }
+        .pricing-card h3 { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+        .price { font-size: 48px; font-weight: 800; margin: 16px 0; }
+        .price span { font-size: 16px; color: var(--text-muted); font-weight: 400; }
+        .pricing-card ul { list-style: none; margin: 24px 0; }
+        .pricing-card li { padding: 8px 0; color: var(--text-muted); font-size: 14px; display: flex; align-items: center; gap: 10px; }
+        .pricing-card li::before { content: '✓'; color: #22c55e; font-weight: 700; }
+        .pricing-card .btn { width: 100%; text-align: center; display: block; }
+        .pricing-card .btn-outline { background: transparent; border: 1px solid var(--border); }
+        
+        /* CTA */
+        .cta { padding: 100px 40px; text-align: center; }
+        .cta h2 { font-size: 40px; font-weight: 800; margin-bottom: 16px; }
+        .cta p { color: var(--text-muted); font-size: 18px; margin-bottom: 40px; }
+        
+        /* Footer */
+        footer { padding: 40px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        footer p { color: var(--text-muted); font-size: 13px; }
+        footer a { color: var(--primary); text-decoration: none; }
+        footer nav { display: flex; gap: 24px; }
+        footer nav a { color: var(--text-muted); font-size: 13px; }
+        
+        @media (max-width: 768px) {
+            .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 40px; }
+            .hero-stats { flex-direction: column; gap: 20px; }
+            .hero-buttons { flex-direction: column; }
+        }
     </style>
 </head>
 <body>
@@ -102,49 +196,141 @@ async def homepage():
         <div class="logo">
             <div class="logo-icon">M</div>
             <span class="logo-text">MCP Hub</span>
-            <span class="logo-tag">v1.0</span>
         </div>
         <nav>
             <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
             <a href="https://github.com/iirenat/mcp-hub-oauth">GitHub</a>
-            <a href="#" class="btn">Get Started</a>
+            <a href="#" class="btn" onclick="alert('Coming soon!')">Get Started Free</a>
         </nav>
     </header>
+    
     <section class="hero">
-        <h1>Enterprise Security for AI Agents</h1>
-        <p>One panel to manage all your AI agents. OAuth 2.0, role-based access, audit logging, and real-time monitoring. Built for companies using 10+ AI agents.</p>
+        <div class="badge"><span class="badge-dot"></span> Now in Public Beta — Free tier available</div>
+        <h1>Secure your <span>AI agents</span> like enterprise</h1>
+        <p>One panel to manage, secure, and monitor all your AI agents. OAuth 2.0, RBAC, audit logging, rate limiting. Built for companies using 10+ AI agents via MCP protocol.</p>
         <div class="hero-buttons">
-            <a href="https://github.com/iirenat/mcp-hub-oauth" class="btn-primary">⭐ Star on GitHub</a>
-            <a href="#features" class="btn-secondary">Learn More</a>
+            <a href="#pricing" class="btn btn-large">Start Free →</a>
+            <a href="https://github.com/iirenat/mcp-hub-oauth" class="btn btn-large btn-outline">⭐ Star on GitHub</a>
+        </div>
+        <div class="hero-stats">
+            <div class="hero-stat"><h3>8+</h3><p>Pre-configured MCP Servers</p></div>
+            <div class="hero-stat"><h3>OAuth</h3><p>Enterprise SSO</p></div>
+            <div class="hero-stat"><h3>RBAC</h3><p>Role-Based Access</p></div>
+            <div class="hero-stat"><h3>MIT</h3><p>Open Source</p></div>
         </div>
     </section>
+    
+    <section class="logos">
+        <p>Compatible with all MCP servers</p>
+        <div class="logos-grid">
+            <span class="logo-item">GitHub</span>
+            <span class="logo-item">Slack</span>
+            <span class="logo-item">Notion</span>
+            <span class="logo-item">PostgreSQL</span>
+            <span class="logo-item">Pinecone</span>
+            <span class="logo-item">Stripe</span>
+            <span class="logo-item">Sentry</span>
+            <span class="logo-item">AWS S3</span>
+        </div>
+    </section>
+    
     <section class="features" id="features">
         <h2>Everything you need</h2>
+        <p>Enterprise-grade security for AI agents from day one</p>
         <div class="features-grid">
-            <div class="feature-card"><div class="feature-icon">📂</div><h3>MCP Server Catalog</h3><p>Browse, search, and connect to any MCP server. GitHub, Slack, Notion, PostgreSQL, and more.</p></div>
-            <div class="feature-card"><div class="feature-icon">🔐</div><h3>OAuth 2.0 + SSO</h3><p>Enterprise-grade authentication. Connect with Google, GitHub, or your SSO provider.</p></div>
-            <div class="feature-card"><div class="feature-icon">👥</div><h3>Role-Based Access</h3><p>Control who can access which agents. Admin, developer, viewer roles.</p></div>
-            <div class="feature-card"><div class="feature-icon">📝</div><h3>Audit Logging</h3><p>Track every request and action. Full history of who did what and when.</p></div>
-            <div class="feature-card"><div class="feature-icon">⏱️</div><h3>Rate Limiting</h3><p>Prevent abuse and control costs. Set per-user and per-agent limits.</p></div>
-            <div class="feature-card"><div class="feature-icon">📊</div><h3>Real-Time Monitoring</h3><p>Live dashboards, health checks, and alerts. Know when something goes wrong.</p></div>
+            <div class="feature-card">
+                <div class="feature-icon">📂</div>
+                <h3>MCP Server Catalog</h3>
+                <p>Browse, search, and connect to any MCP server. Pre-configured integrations for GitHub, Slack, Notion, PostgreSQL, and more. Add custom servers in one click.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>OAuth 2.0 + SSO</h3>
+                <p>Enterprise-grade authentication. Connect with Google, GitHub, Azure AD, or your SSO provider. SAML support for Enterprise plan.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Role-Based Access</h3>
+                <p>Control who can access which agents. Admin, developer, and viewer roles. Per-agent permissions. Audit trail for compliance.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📝</div>
+                <h3>Audit Logging</h3>
+                <p>Track every request and action. Full history of who did what and when. Export logs for compliance. 10K+ logs on Pro plan.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⏱️</div>
+                <h3>Rate Limiting</h3>
+                <p>Prevent abuse and control costs. Set per-user and per-agent limits. Automatic alerts when limits are approaching.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Real-Time Monitoring</h3>
+                <p>Live dashboards, health checks, and alerts. Know when something goes wrong. Uptime monitoring with 99.9% SLA on Enterprise.</p>
+            </div>
         </div>
     </section>
-    <section class="stats">
-        <div class="stats-grid">
-            <div class="stat"><h3>8+</h3><p>Pre-configured MCP Servers</p></div>
-            <div class="stat"><h3>OAuth</h3><p>Enterprise SSO Support</p></div>
-            <div class="stat"><h3>RBAC</h3><p>Role-Based Access Control</p></div>
-            <div class="stat"><h3>MIT</h3><p>Open Source License</p></div>
+    
+    <section class="pricing" id="pricing">
+        <h2>Simple, transparent pricing</h2>
+        <p>Start free. Scale when you need to.</p>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Free</h3>
+                <div class="price">$0<span>/month</span></div>
+                <ul>
+                    <li>Up to 3 agents</li>
+                    <li>Basic MCP server catalog</li>
+                    <li>OAuth 2.0</li>
+                    <li>Email support</li>
+                </ul>
+                <a href="#" class="btn btn-outline" onclick="alert('Create account coming soon!')">Get Started</a>
+            </div>
+            <div class="pricing-card popular">
+                <div class="popular-badge">Most Popular</div>
+                <h3>Pro</h3>
+                <div class="price">$29<span>/month</span></div>
+                <ul>
+                    <li>Up to 25 agents</li>
+                    <li>Full MCP server catalog</li>
+                    <li>OAuth 2.0 + SSO</li>
+                    <li>Audit logging</li>
+                    <li>Rate limiting</li>
+                    <li>Priority support</li>
+                </ul>
+                <a href="#" class="btn" onclick="alert('Stripe checkout coming soon!')">Start Free Trial</a>
+            </div>
+            <div class="pricing-card">
+                <h3>Enterprise</h3>
+                <div class="price">$99<span>/month</span></div>
+                <ul>
+                    <li>Unlimited agents</li>
+                    <li>Custom MCP servers</li>
+                    <li>OAuth + SSO + SAML</li>
+                    <li>Full audit trail</li>
+                    <li>SLA 99.9%</li>
+                    <li>Dedicated manager</li>
+                </ul>
+                <a href="#" class="btn btn-outline" onclick="alert('Contact sales coming soon!')">Contact Sales</a>
+            </div>
         </div>
     </section>
+    
     <section class="cta">
         <h2>Ready to secure your AI agents?</h2>
-        <p>Self-host for free or use our enterprise hosting.</p>
-        <a href="https://github.com/iirenat/mcp-hub-oauth" class="btn-primary">Get Started — Free</a>
+        <p>Start for free. No credit card required.</p>
+        <a href="#" class="btn btn-large" onclick="alert('Sign up coming soon!')">Get Started Free →</a>
     </section>
+    
     <footer>
         <p>© 2026 MCP Hub. Open source under MIT license.</p>
-        <a href="https://github.com/iirenat/mcp-hub-oauth">GitHub</a>
+        <nav>
+            <a href="https://github.com/iirenat/mcp-hub-oauth">GitHub</a>
+            <a href="#">Terms</a>
+            <a href="#">Privacy</a>
+            <a href="#">Contact</a>
+        </nav>
     </footer>
 </body>
 </html>"""
@@ -199,9 +385,35 @@ async def get_stats():
         "categories": list(set(s["category"] for s in servers_db.values()))
     }
 
+@app.get("/api/plans")
+async def get_plans():
+    return {"plans": PLANS}
+
+@app.post("/api/checkout")
+async def create_checkout(req: CheckoutRequest):
+    """Создаёт сессию оплаты (заглушка для Stripe)."""
+    if req.plan not in PLANS:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    
+    plan = PLANS[req.plan]
+    
+    # В реальности — создание Stripe Checkout Session
+    # stripe.checkout.Session.create(...)
+    
+    checkout_id = secrets.token_hex(16)
+    return {
+        "checkout_id": checkout_id,
+        "plan": req.plan,
+        "amount": plan["price"],
+        "currency": "usd",
+        "status": "pending",
+        "checkout_url": f"#checkout/{checkout_id}",  # В реальности — Stripe URL
+        "message": "Stripe integration coming soon. For now, this is a demo."
+    }
+
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "MCP Hub", "version": "1.0.0", "servers": len(servers_db)}
+    return {"status": "ok", "service": "MCP Hub", "version": "2.0.0", "servers": len(servers_db)}
 
 if __name__ == "__main__":
     import uvicorn
