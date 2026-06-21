@@ -19,8 +19,8 @@
             --border: rgba(255,255,255,0.08);
             --border-hover: rgba(255,255,255,0.15);
             --text: #f8fafc;
-            --text-muted: #94a3b8;
-            --text-dim: #64748b;
+            --text-muted: #cbd5e1;
+            --text-dim: #94a3b8;
             --gradient-1: linear-gradient(135deg, #6366f1, #06b6d4);
             --gradient-2: linear-gradient(135deg, #818cf8, #22d3ee);
             --glow: 0 0 40px rgba(99,102,241,0.15);
@@ -81,6 +81,36 @@
         @keyframes drift {
             0% { transform: translateY(0); }
             100% { transform: translateY(-100px); }
+        }
+
+        /* ── Video Slideshow ── */
+        .video-slideshow {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -2;
+            overflow: hidden;
+        }
+        .video-slideshow .slide {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            animation: zoom 8s ease-in-out infinite alternate;
+        }
+        .video-slideshow .slide.active { opacity: 0.4; }
+        @keyframes zoom {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+        .video-slideshow .slide-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(180deg, rgba(3,3,8,0.8) 0%, rgba(3,3,8,0.9) 100%);
         }
 
         /* ── Logo SVG ── */
@@ -318,14 +348,15 @@
         .feature-card:hover::before { opacity: 1; }
         .feature-icon {
             width: 52px; height: 52px;
-            background: var(--gradient-1);
+            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(6,182,212,0.2));
+            border: 1px solid rgba(99,102,241,0.3);
             border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 24px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(99,102,241,0.3);
+            backdrop-filter: blur(10px);
         }
         .feature-card h3 {
             font-size: 18px;
@@ -590,6 +621,21 @@
         <div class="overlay"></div>
     </div>
 
+    <!-- Image Slideshow Background -->
+    <div class="video-slideshow" id="slideshow">
+        <div class="slide active" style="background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);"></div>
+        <div class="slide" style="background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);"></div>
+        <div class="slide" style="background: linear-gradient(135deg, #0d1b2a, #1b263b, #415a77);"></div>
+        <div class="slide" style="background: linear-gradient(135deg, #1b1b2f, #162447, #1f4068);"></div>
+        <div class="slide" style="background: linear-gradient(135deg, #0c0c1d, #1a1a3e, #2d2d5e);"></div>
+        <div class="slide" style="background: linear-gradient(135deg, #10002b, #240046, #3c096c);"></div>
+        <div class="slide" style="background: linear-gradient(135deg, #0a0a23, #1a1a4e, #2a2a6e);"></div>
+        <div class="slide" style="background: linear-gradient(135deg, #0b0b3b, #1b1b5b, #2b2b7b);"></div>
+        <div class="slide" style="background: linear-gradient(135deg, #050520, #151540, #252560);"></div>
+        <div class="slide" style="background: linear-gradient(135deg, #080830, #181850, #282870);"></div>
+        <div class="slide-overlay"></div>
+    </div>
+
     <!-- Header -->
     <header id="header">
         <a href="#" class="logo">
@@ -629,7 +675,7 @@
             <span class="badge-dot"></span>
             Now in Public Beta — Free tier available
         </div>
-        <h1>Secure your <span class="gradient">AI agents</span> like enterprise</h1>
+        <h1>Secure your <span class="gradient">AI agents</span> like an enterprise</h1>
         <p>One panel to manage, secure, and monitor all your AI agents. OAuth 2.0, RBAC, audit logging, rate limiting. Built for companies using 10+ AI agents via MCP protocol.</p>
         <div class="hero-buttons">
             <a href="#pricing" class="btn btn-primary btn-large">Start Free →</a>
@@ -700,7 +746,7 @@
                     <li>Basic OAuth</li>
                     <li>100 audit log entries</li>
                 </ul>
-                <a href="#" class="btn btn-outline" style="width:100%;text-align:center;">Get Started</a>
+                <a href="#contact" class="btn btn-outline" style="width:100%;text-align:center;display:block;">Get Started</a>
             </div>
             <div class="pricing-card popular reveal">
                 <div class="popular-badge">Most Popular</div>
@@ -715,21 +761,22 @@
                     <li>Rate limiting</li>
                     <li>Email support</li>
                 </ul>
-                <a href="#" class="btn btn-primary" style="width:100%;text-align:center;">Start Free Trial</a>
+                <a href="#contact" class="btn btn-primary" style="width:100%;text-align:center;display:block;">Start Free Trial</a>
             </div>
             <div class="pricing-card reveal">
                 <h3>Enterprise</h3>
-                <p style="color:var(--text-dim);font-size:14px;margin:4px 0 16px;">For companies</p>
-                <div class="price">$14.99<span>/month</span></div>
+                <p style="color:var(--text-dim);font-size:14px;margin:4px 0 16px;">For large organizations</p>
+                <div class="price">$29.99<span>/month</span></div>
                 <ul>
-                    <li>Up to 100 agents</li>
-                    <li>Unlimited servers</li>
+                    <li>Unlimited agents</li>
+                    <li>Unlimited MCP servers</li>
                     <li>OAuth + SSO + SAML</li>
-                    <li>Unlimited audit</li>
+                    <li>Unlimited audit logs</li>
                     <li>SLA 99.9%</li>
-                    <li>Priority support</li>
+                    <li>Priority 24/7 support</li>
+                    <li>Custom integrations</li>
                 </ul>
-                <a href="#" class="btn btn-outline" style="width:100%;text-align:center;">Contact Sales</a>
+                <a href="#contact" class="btn btn-outline" style="width:100%;text-align:center;">Contact Sales</a>
             </div>
         </div>
     </section>
@@ -881,6 +928,17 @@
             currentGrad = (currentGrad + 1) % gradients.length;
             videoBg.style.background = gradients[currentGrad];
         }, 4000);
+
+        // ── Image Slideshow ──
+        const slides = document.querySelectorAll('#slideshow .slide');
+        let currentSlide = 0;
+        if (slides.length > 0) {
+            setInterval(() => {
+                slides[currentSlide].classList.remove('active');
+                currentSlide = (currentSlide + 1) % slides.length;
+                slides[currentSlide].classList.add('active');
+            }, 4000);
+        }
     </script>
 </body>
 </html>
