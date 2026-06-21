@@ -16,7 +16,7 @@
             --gradient-2: linear-gradient(135deg, #818cf8, #22d3ee);
             --glow: 0 0 40px rgba(99,102,241,0.15);
         }
-        html { scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; overflow-x: hidden; }
         body { font-family: 'Inter', -apple-system, sans-serif; background: #000; color: var(--text); line-height: 1.7; overflow-x: hidden; min-height: 100vh; }
         
         /* ── Canvas Starfield ── */
@@ -272,13 +272,24 @@
     <!-- Auth Modal -->
     <div class="auth-modal" id="authModal"><div class="auth-box" style="position:relative;"><button onclick="document.getElementById('authModal').classList.remove('open')" style="position:absolute;top:12px;right:14px;background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;">×</button><h2 id="authTitle">Sign up</h2><p style="color:var(--text-muted);font-size:12px;margin-bottom:18px;">Create your free account</p><a href="/api/auth/google" class="btn btn-google btn-large" style="width:100%;justify-content:center;margin-bottom:8px;">Continue with Google</a><a href="/api/auth/github" class="btn btn-github btn-large" style="width:100%;justify-content:center;margin-bottom:12px;">Continue with GitHub</a><div style="display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--text-dim);font-size:11px;"><span style="flex:1;height:1px;background:var(--border);"></span>or<span style="flex:1;height:1px;background:var(--border);"></span></div><form onsubmit="handleAuth(event)" style="display:flex;flex-direction:column;gap:8px;"><input name="email" type="email" placeholder="Email" required style="background:var(--bg-card);border:1px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-size:13px;"><input name="password" type="password" placeholder="Password" required style="background:var(--bg-card);border:1px solid var(--border);border-radius:9px;padding:10px 13px;color:var(--text);font-size:13px;"><button type="submit" class="btn btn-primary btn-large" style="width:100%;">Continue</button></form></div></div>
 
+    <!-- Toast Notification -->
+    <div id="toast" style="display:none;position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;z-index:9999;transition:opacity 0.3s;"></div>
+
     <script>
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            if (!t) return;
+            t.textContent = msg;
+            t.style.display = 'block';
+            t.style.opacity = '1';
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display = 'none', 300); }, 3000);
+        }
         window.addEventListener('scroll', () => document.getElementById('header').classList.toggle('scrolled', window.scrollY > 50));
         document.querySelectorAll('.faq-question').forEach(q => q.addEventListener('click', () => q.parentElement.classList.toggle('open')));
         new IntersectionObserver((e) => e.forEach(i => { if (i.isIntersecting) i.target.classList.add('visible'); }), { threshold: 0.1 }).querySelectorAll?.('.reveal')?.forEach(el => el);
         document.querySelectorAll('.reveal').forEach(el => new IntersectionObserver((e) => e.forEach(i => { if (i.isIntersecting) i.target.classList.add('visible'); }), { threshold: 0.1 }).observe(el));
         function selectPlan(el) { document.querySelectorAll('.pricing-card').forEach(c => c.classList.remove('selected')); el.classList.add('selected'); }
-        document.getElementById('contactForm')?.addEventListener('submit', async (e) => { e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); try { const r = await (await fetch('/api/feedback', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(d) })).json(); alert(r.message || 'Sent!'); e.target.reset(); } catch(err) { alert('Sent!'); e.target.reset(); } });
+        document.getElementById('contactForm')?.addEventListener('submit', async (e) => { e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); try { const r = await (await fetch('/api/feedback', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(d) })).json(); showToast(r.message || 'Message sent!'); e.target.reset(); } catch(err) { showToast('Message sent!'); e.target.reset(); } });
         async function handleAuth(e) { e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); const r = await (await fetch('/api/auth/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(d) })).json(); if (r.status === 'ok') window.location.reload(); else alert(r.detail || 'Error'); }
         (async () => { try { const r = await fetch('/api/auth/me'); if (r.ok) { const d = await r.json(); if (d.user) { document.getElementById('navAuth').style.display = 'none'; } } } catch(e) {} })();
 
