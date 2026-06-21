@@ -852,7 +852,7 @@
             const data = Object.fromEntries(new FormData(form));
             
             try {
-                const resp = await fetch('/api/contact', {
+                const resp = await fetch('/api/feedback', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)

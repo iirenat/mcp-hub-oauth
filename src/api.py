@@ -1,5 +1,5 @@
 """
-MCP Hub — Full Feature API (No payment required)
+MCP Hub - Full Feature API (No payment required)
 """
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,39 +25,24 @@ contacts_db = []
 auth_svc = RegistrationService()
 
 class ServerCreate(BaseModel):
-    name: str
-    description: str
-    url: str
-    category: str = "general"
-    tags: List[str] = []
-    requires_auth: bool = False
+    name: str; description: str; url: str; category: str = "general"; tags: List[str] = []; requires_auth: bool = False
 
 class AuthStart(BaseModel):
-    server_id: str
-    user_id: str
+    server_id: str; user_id: str
 
 class RegisterRequest(BaseModel):
-    email: str
-    password: str
+    email: str; password: str
 
 class LoginRequest(BaseModel):
-    email: str
-    password: str
+    email: str; password: str
 
 class ContactRequest(BaseModel):
-    name: str
-    email: str
-    message: str
+    name: str; email: str; message: str
 
 class CheckoutRequest(BaseModel):
-    plan: str
-    email: str
+    plan: str; email: str
 
-PLANS = {
-    "free": {"name": "Free", "price": 0, "period": "month", "features": ["1 agent", "3 MCP servers", "Basic OAuth", "100 audit logs"]},
-    "pro": {"name": "Pro", "price": 6.99, "period": "month", "features": ["Up to 10 agents", "50 MCP servers", "OAuth 2.0 + SSO", "Full audit (10K)", "Rate limiting", "Email support"], "popular": True},
-    "enterprise": {"name": "Enterprise", "price": 14.99, "period": "month", "features": ["Up to 100 agents", "Unlimited MCP servers", "OAuth + SSO + SAML", "Unlimited audit", "SLA 99.9%", "Priority support"]}
-}
+PLANS = {"free": {"name": "Free", "price": 0, "period": "month", "features": ["1 agent", "3 MCP servers", "Basic OAuth", "100 audit logs"]}, "pro": {"name": "Pro", "price": 6.99, "period": "month", "features": ["Up to 10 agents", "50 MCP servers", "OAuth 2.0 + SSO", "Full audit (10K)", "Rate limiting", "Email support"], "popular": True}, "enterprise": {"name": "Enterprise", "price": 14.99, "period": "month", "features": ["Up to 100 agents", "Unlimited MCP servers", "OAuth + SSO + SAML", "Unlimited audit", "SLA 99.9%", "Priority support"]}}
 
 DEFAULT_SERVERS = [
     {"name": "GitHub", "description": "GitHub API for AI agents", "url": "https://api.github.com/mcp", "category": "development", "tags": ["git", "code"], "requires_auth": True},
@@ -100,15 +85,18 @@ async def login(req: LoginRequest):
 @app.get("/api/users/me")
 async def get_me(user_id: str):
     user = auth_svc.get_user(user_id)
-    if not user:
-        raise HTTPException(404, "Not found")
+    if not user: raise HTTPException(404, "Not found")
     return {"user": user, "subscription": auth_svc.get_sub(user_id)}
+
+@app.post("/api/feedback")
+async def feedback(req: ContactRequest):
+    contacts_db.append({"name": req.name, "email": req.email, "message": req.message, "time": datetime.now().isoformat()})
+    return {"status": "ok", "message": "Message received!"}
 
 @app.get("/api/servers")
 async def list_servers(category: str = None, search: str = None):
     servers = list(servers_db.values())
-    if category:
-        servers = [s for s in servers if s["category"] == category]
+    if category: servers = [s for s in servers if s["category"] == category]
     if search:
         sl = search.lower()
         servers = [s for s in servers if sl in s["name"].lower() or sl in s["description"].lower()]
@@ -116,16 +104,13 @@ async def list_servers(category: str = None, search: str = None):
 
 @app.get("/api/servers/{server_id}")
 async def get_server(server_id: str):
-    if server_id not in servers_db:
-        raise HTTPException(404, "Not found")
+    if server_id not in servers_db: raise HTTPException(404, "Not found")
     return servers_db[server_id]
 
 @app.post("/api/servers")
 async def add_server(server: ServerCreate):
     server_id = hashlib.md5(server.name.encode()).hexdigest()[:12]
-    data = server.dict()
-    data["id"] = server_id
-    data["created_at"] = datetime.now().isoformat()
+    data = server.dict(); data["id"] = server_id; data["created_at"] = datetime.now().isoformat()
     servers_db[server_id] = data
     audit_db.append({"action": "server_added", "server_id": server_id, "timestamp": datetime.now().isoformat()})
     return data
@@ -136,35 +121,24 @@ async def start_auth(auth: AuthStart):
     return {"auth_url": f"#oauth?state={state}", "state": state}
 
 @app.get("/api/tokens")
-async def list_tokens():
-    return {"tokens": tokens_db}
+async def list_tokens(): return {"tokens": tokens_db}
 
 @app.get("/api/audit")
-async def get_audit(limit: int = 50):
-    return {"logs": audit_db[-limit:]}
+async def get_audit(limit: int = 50): return {"logs": audit_db[-limit:]}
 
 @app.get("/api/stats")
-async def get_stats():
-    return {"servers": len(servers_db), "tokens": len(tokens_db), "audit_logs": len(audit_db)}
+async def get_stats(): return {"servers": len(servers_db), "tokens": len(tokens_db), "audit_logs": len(audit_db)}
 
 @app.get("/api/plans")
-async def get_plans():
-    return {"plans": PLANS}
+async def get_plans(): return {"plans": PLANS}
 
 @app.post("/api/checkout")
 async def create_checkout(req: CheckoutRequest):
-    if req.plan not in PLANS:
-        raise HTTPException(400, "Invalid plan")
-    return {"plan": req.plan, "amount": PLANS[req.plan]["price"], "status": "registered", "message": "Thanks for your interest! Payment integration coming soon."}
-
-@app.post("/api/contact")
-async def contact(req: ContactRequest):
-    contacts_db.append({"name": req.name, "email": req.email, "message": req.message, "time": datetime.now().isoformat()})
-    return {"status": "ok", "message": "Message received!"}
+    if req.plan not in PLANS: raise HTTPException(400, "Invalid plan")
+    return {"plan": req.plan, "amount": PLANS[req.plan]["price"], "status": "registered", "message": "Thanks! Payment coming soon."}
 
 @app.get("/health")
-async def health():
-    return {"status": "ok", "service": "MCP Hub", "version": "2.0.0", "servers": len(servers_db)}
+async def health(): return {"status": "ok", "service": "MCP Hub", "version": "2.0.0", "servers": len(servers_db)}
 
 if __name__ == "__main__":
     import uvicorn
