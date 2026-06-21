@@ -3,6 +3,7 @@ MCP Hub — Database models and registration.
 """
 import hashlib
 import secrets
+import json
 import os
 from datetime import datetime
 from typing import Optional, Dict, List
