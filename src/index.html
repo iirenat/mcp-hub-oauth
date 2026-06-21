@@ -419,7 +419,7 @@
                     m.y += Math.sin(m.angle) * m.speed;
                 });
                 
-                // Draw bots (fixed position, no scroll parallax)
+                // Draw bots with very slow parallax (scrollY already declared above)
                 bots.forEach(b => {
                     b.x += b.driftX;
                     b.y += b.driftY;
@@ -431,7 +431,7 @@
                     if (b.y > H + 50) b.y = -50;
                     
                     ctx.save();
-                    ctx.translate(b.x, b.y);
+                    ctx.translate(b.x, b.y + scrollY * 0.02);
                     ctx.rotate(b.rotation);
                     ctx.globalAlpha = b.opacity;
                     ctx.font = `${b.size}px sans-serif`;
