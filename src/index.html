@@ -22,21 +22,52 @@
         /* ── Starfield Background ── */
         .starfield {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            background: radial-gradient(ellipse at center, #0a0a2e 0%, #000000 70%);
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(30, 27, 75, 0.6) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(15, 52, 96, 0.4) 0%, transparent 40%),
+                radial-gradient(ellipse at 50% 80%, rgba(49, 46, 129, 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse at center, #0a0a2e 0%, #000000 70%);
             overflow: hidden;
         }
         .star {
             position: absolute; border-radius: 50%;
             animation: twinkle var(--dur) ease-in-out infinite alternate;
         }
+        .star::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: var(--ray-w); height: var(--ray-h);
+            background: linear-gradient(to right, transparent, var(--color), transparent);
+            transform: translate(-50%, -50%);
+            opacity: 0.4;
+        }
+        .star::before {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            width: var(--ray-h); height: var(--ray-w);
+            background: linear-gradient(to bottom, transparent, var(--color), transparent);
+            transform: translate(-50%, -50%);
+            opacity: 0.4;
+        }
         @keyframes twinkle {
-            0% { opacity: var(--min-opacity); transform: scale(1); }
+            0% { opacity: var(--min-opacity); transform: scale(0.8); }
             100% { opacity: 1; transform: scale(var(--scale)); }
+        }
+        .meteor {
+            position: absolute;
+            width: 2px; height: 80px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.8), transparent);
+            animation: meteorFall var(--dur) linear infinite;
+            opacity: 0;
+        }
+        @keyframes meteorFall {
+            0% { opacity: 0; transform: translate(0, 0) rotate(45deg); }
+            5% { opacity: 1; }
+            15% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(45deg); }
+            100% { opacity: 0; }
         }
         .bot {
             position: absolute; font-size: var(--size);
             animation: botFloat var(--dur) ease-in-out infinite alternate;
-            opacity: 0.6; filter: blur(0.5px);
+            opacity: 0.15; filter: blur(1px);
         }
         @keyframes botFloat {
             0% { transform: translate(0, 0) rotate(0deg); }
@@ -269,54 +300,75 @@
         async function handleAuth(e) { e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); const r = await (await fetch('/api/auth/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(d) })).json(); if (r.status === 'ok') window.location.reload(); else alert(r.detail || 'Error'); }
         (async () => { try { const r = await fetch('/api/auth/me'); if (r.ok) { const d = await r.json(); if (d.user) { document.getElementById('navAuth').style.display = 'none'; } } } catch(e) {} })();
 
-        // ── Starfield & Bots ──
+        // ── Starfield & Bots & Meteors ──
         (function() {
             const sf = document.getElementById('starfield');
             if (!sf) return;
             
-            // Generate 200 stars
-            for (let i = 0; i < 200; i++) {
+            const colors = ['#fff', '#a5b4fc', '#67e8f9', '#fbbf24', '#f87171', '#c084fc', '#34d399'];
+            
+            // Generate 150 stars with diffraction rays
+            for (let i = 0; i < 150; i++) {
                 const star = document.createElement('div');
                 star.className = 'star';
                 const size = Math.random() * 3 + 1;
                 const x = Math.random() * 100;
                 const y = Math.random() * 100;
                 const dur = Math.random() * 4 + 2;
-                const minOp = Math.random() * 0.3 + 0.1;
-                const scale = Math.random() * 1.5 + 0.5;
-                const colors = ['#fff', '#a5b4fc', '#67e8f9', '#fbbf24', '#f87171'];
+                const minOp = Math.random() * 0.2 + 0.1;
+                const scale = Math.random() * 1.5 + 0.8;
                 const color = colors[Math.floor(Math.random() * colors.length)];
+                const rayLen = size * 8 + Math.random() * 20;
                 
                 star.style.cssText = `
                     width: ${size}px; height: ${size}px;
                     left: ${x}%; top: ${y}%;
                     background: ${color};
-                    box-shadow: 0 0 ${size * 2}px ${size}px ${color};
+                    box-shadow: 0 0 ${size * 3}px ${size * 1.5}px ${color}, 0 0 ${size * 6}px ${size * 0.5}px ${color};
                     --dur: ${dur}s; --min-opacity: ${minOp}; --scale: ${scale};
+                    --color: ${color}; --ray-w: ${rayLen}px; --ray-h: 1px;
                     animation-delay: ${Math.random() * 5}s;
                 `;
                 sf.appendChild(star);
             }
             
-            // Generate 25 bots
-            const botEmojis = ['🤖', '⚙️', '🔮', '💠', '🔷', '⬡', '◈', '⟐'];
-            for (let i = 0; i < 25; i++) {
+            // Generate 8 meteors
+            for (let i = 0; i < 8; i++) {
+                const meteor = document.createElement('div');
+                meteor.className = 'meteor';
+                const x = Math.random() * 100;
+                const y = Math.random() * 50;
+                const dur = Math.random() * 10 + 8;
+                const dx = Math.random() * 200 + 100;
+                const dy = Math.random() * 200 + 100;
+                
+                meteor.style.cssText = `
+                    left: ${x}%; top: ${y}%;
+                    --dur: ${dur}s; --dx: ${dx}px; --dy: ${dy}px;
+                    animation-delay: ${Math.random() * 15}s;
+                `;
+                sf.appendChild(meteor);
+            }
+            
+            // Generate 20 bots (small, barely visible, slow movement)
+            const botEmojis = ['🤖', '⚙️', '🔮', '💠', '🔷', '⬡', '◈', '⟐', '△', '◇'];
+            for (let i = 0; i < 20; i++) {
                 const bot = document.createElement('div');
                 bot.className = 'bot';
                 const emoji = botEmojis[Math.floor(Math.random() * botEmojis.length)];
                 const x = Math.random() * 100;
                 const y = Math.random() * 100;
-                const size = Math.random() * 14 + 10;
-                const dur = Math.random() * 15 + 10;
-                const dx = (Math.random() - 0.5) * 30;
-                const dy = (Math.random() - 0.5) * 30;
-                const rot = (Math.random() - 0.5) * 20;
+                const size = Math.random() * 10 + 8;
+                const dur = Math.random() * 20 + 15;
+                const dx = (Math.random() - 0.5) * 20;
+                const dy = (Math.random() - 0.5) * 20;
+                const rot = (Math.random() - 0.5) * 10;
                 
                 bot.style.cssText = `
                     left: ${x}%; top: ${y}%;
                     --size: ${size}px; --dur: ${dur}s;
                     --dx: ${dx}px; --dy: ${dy}px; --rot: ${rot}deg;
-                    animation-delay: ${Math.random() * 10}s;
+                    animation-delay: ${Math.random() * 15}s;
                 `;
                 bot.textContent = emoji;
                 sf.appendChild(bot);
