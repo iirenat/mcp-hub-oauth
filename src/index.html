@@ -419,30 +419,26 @@
                     m.y += Math.sin(m.angle) * m.speed;
                 });
                 
-                // Draw bots (behind text, slow drift)
+                // Draw bots (fixed position, no scroll parallax)
                 bots.forEach(b => {
                     b.x += b.driftX;
-                    b.y += b.driftY + scrollY * 0.02; // Very slow parallax
+                    b.y += b.driftY;
                     b.rotation += b.rotSpeed;
                     
-                    // Wrap around
                     if (b.x < -50) b.x = W + 50;
                     if (b.x > W + 50) b.x = -50;
                     if (b.y < -50) b.y = H + 50;
                     if (b.y > H + 50) b.y = -50;
                     
-                    const by = b.y + scrollY * 0.15;
-                    if (by > -30 && by < H + 30) {
-                        ctx.save();
-                        ctx.translate(b.x, by);
-                        ctx.rotate(b.rotation);
-                        ctx.globalAlpha = b.opacity;
-                        ctx.font = `${b.size}px sans-serif`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(b.char, 0, 0);
-                        ctx.restore();
-                    }
+                    ctx.save();
+                    ctx.translate(b.x, b.y);
+                    ctx.rotate(b.rotation);
+                    ctx.globalAlpha = b.opacity;
+                    ctx.font = `${b.size}px sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(b.char, 0, 0);
+                    ctx.restore();
                 });
                 
                 requestAnimationFrame(animate);
