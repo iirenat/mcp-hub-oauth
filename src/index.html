@@ -19,61 +19,11 @@
         html { scroll-behavior: smooth; }
         body { font-family: 'Inter', -apple-system, sans-serif; background: #000; color: var(--text); line-height: 1.7; overflow-x: hidden; }
         
-        /* ── Starfield Background ── */
-        .starfield {
+        /* ── Canvas Starfield ── */
+        #starCanvas {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            background: 
-                radial-gradient(ellipse at 20% 50%, rgba(30, 27, 75, 0.6) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 20%, rgba(15, 52, 96, 0.4) 0%, transparent 40%),
-                radial-gradient(ellipse at 50% 80%, rgba(49, 46, 129, 0.3) 0%, transparent 50%),
-                radial-gradient(ellipse at center, #0a0a2e 0%, #000000 70%);
-            overflow: hidden;
+            background: radial-gradient(ellipse at center, #0d0d2b 0%, #050510 50%, #000000 100%);
         }
-        .star {
-            position: absolute; border-radius: 50%;
-            animation: twinkle var(--dur) ease-in-out infinite alternate;
-        }
-        .star::after {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            width: var(--ray-w); height: var(--ray-h);
-            background: linear-gradient(to right, transparent, var(--color), transparent);
-            transform: translate(-50%, -50%);
-            opacity: 0.4;
-        }
-        .star::before {
-            content: ''; position: absolute; top: 50%; left: 50%;
-            width: var(--ray-h); height: var(--ray-w);
-            background: linear-gradient(to bottom, transparent, var(--color), transparent);
-            transform: translate(-50%, -50%);
-            opacity: 0.4;
-        }
-        @keyframes twinkle {
-            0% { opacity: var(--min-opacity); transform: scale(0.8); }
-            100% { opacity: 1; transform: scale(var(--scale)); }
-        }
-        .meteor {
-            position: absolute;
-            width: 2px; height: 80px;
-            background: linear-gradient(to bottom, rgba(255,255,255,0.8), transparent);
-            animation: meteorFall var(--dur) linear infinite;
-            opacity: 0;
-        }
-        @keyframes meteorFall {
-            0% { opacity: 0; transform: translate(0, 0) rotate(45deg); }
-            5% { opacity: 1; }
-            15% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(45deg); }
-            100% { opacity: 0; }
-        }
-        .bot {
-            position: absolute; font-size: var(--size);
-            animation: botFloat var(--dur) ease-in-out infinite alternate;
-            opacity: 0.15; filter: blur(1px);
-        }
-        @keyframes botFloat {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); }
-        }
-        .bg-animated .grid { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 60px 60px; }
         .logo-svg { width: 36px; height: 36px; }
         header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 14px 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(3,3,8,0.6); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); transition: all 0.3s; }
         header.scrolled { padding: 10px 40px; background: rgba(3,3,8,0.9); }
@@ -180,9 +130,8 @@
     <!-- USER_DATA -->
     /* USER_DATA */
 
-    <!-- Starfield Background -->
-    <div class="starfield" id="starfield"></div>
-    </div>
+    <!-- Starfield Canvas -->
+    <canvas id="starCanvas"></canvas>
 
     <!-- Header -->
     <header id="header">
@@ -300,79 +249,193 @@
         async function handleAuth(e) { e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); const r = await (await fetch('/api/auth/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(d) })).json(); if (r.status === 'ok') window.location.reload(); else alert(r.detail || 'Error'); }
         (async () => { try { const r = await fetch('/api/auth/me'); if (r.ok) { const d = await r.json(); if (d.user) { document.getElementById('navAuth').style.display = 'none'; } } } catch(e) {} })();
 
-        // ── Starfield & Bots & Meteors ──
+        // ── Canvas Starfield Engine ──
         (function() {
-            const sf = document.getElementById('starfield');
-            if (!sf) return;
+            const canvas = document.getElementById('starCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let W, H;
+            const stars = [];
+            const meteors = [];
+            const bots = [];
+            const nebulae = [];
             
-            const colors = ['#fff', '#a5b4fc', '#67e8f9', '#fbbf24', '#f87171', '#c084fc', '#34d399'];
+            function resize() {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
             
-            // Generate 150 stars with diffraction rays
-            for (let i = 0; i < 150; i++) {
-                const star = document.createElement('div');
-                star.className = 'star';
-                const size = Math.random() * 3 + 1;
-                const x = Math.random() * 100;
-                const y = Math.random() * 100;
-                const dur = Math.random() * 4 + 2;
-                const minOp = Math.random() * 0.2 + 0.1;
-                const scale = Math.random() * 1.5 + 0.8;
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                const rayLen = size * 8 + Math.random() * 20;
-                
-                star.style.cssText = `
-                    width: ${size}px; height: ${size}px;
-                    left: ${x}%; top: ${y}%;
-                    background: ${color};
-                    box-shadow: 0 0 ${size * 3}px ${size * 1.5}px ${color}, 0 0 ${size * 6}px ${size * 0.5}px ${color};
-                    --dur: ${dur}s; --min-opacity: ${minOp}; --scale: ${scale};
-                    --color: ${color}; --ray-w: ${rayLen}px; --ray-h: 1px;
-                    animation-delay: ${Math.random() * 5}s;
-                `;
-                sf.appendChild(star);
+            // Nebula colors
+            const nebulaColors = [
+                {x: 0.2, y: 0.3, r: 300, color: 'rgba(99,102,241,0.03)'},
+                {x: 0.7, y: 0.6, r: 250, color: 'rgba(6,182,212,0.02)'},
+                {x: 0.5, y: 0.8, r: 200, color: 'rgba(139,92,246,0.025)'},
+                {x: 0.8, y: 0.2, r: 180, color: 'rgba(236,72,153,0.02)'},
+            ];
+            
+            // Create stars
+            for (let i = 0; i < 300; i++) {
+                const size = Math.random() * 2.5 + 0.5;
+                const isBright = Math.random() < 0.15;
+                stars.push({
+                    x: Math.random() * 2000 - 500,
+                    y: Math.random() * 2000 - 500,
+                    size: isBright ? size * 1.5 : size,
+                    baseSize: size,
+                    brightness: Math.random() * 0.5 + 0.3,
+                    twinkleSpeed: Math.random() * 0.02 + 0.005,
+                    twinkleOffset: Math.random() * Math.PI * 2,
+                    color: isBright ? ['#fff','#a5b4fc','#67e8f9','#fbbf24','#f87171','#c084fc'][Math.floor(Math.random()*6)] : '#fff',
+                    hasRays: isBright && Math.random() < 0.5,
+                    rayLength: isBright ? Math.random() * 40 + 20 : 0
+                });
             }
             
-            // Generate 8 meteors
-            for (let i = 0; i < 8; i++) {
-                const meteor = document.createElement('div');
-                meteor.className = 'meteor';
-                const x = Math.random() * 100;
-                const y = Math.random() * 50;
-                const dur = Math.random() * 10 + 8;
-                const dx = Math.random() * 200 + 100;
-                const dy = Math.random() * 200 + 100;
-                
-                meteor.style.cssText = `
-                    left: ${x}%; top: ${y}%;
-                    --dur: ${dur}s; --dx: ${dx}px; --dy: ${dy}px;
-                    animation-delay: ${Math.random() * 15}s;
-                `;
-                sf.appendChild(meteor);
+            // Create meteors
+            for (let i = 0; i < 6; i++) {
+                meteors.push({
+                    x: Math.random() * 2000,
+                    y: Math.random() * 500,
+                    length: Math.random() * 100 + 60,
+                    speed: Math.random() * 8 + 4,
+                    angle: Math.PI / 4 + (Math.random() - 0.5) * 0.3,
+                    opacity: 0,
+                    life: 0,
+                    maxLife: Math.random() * 60 + 40,
+                    width: Math.random() * 2 + 1
+                });
             }
             
-            // Generate 20 bots (small, barely visible, slow movement)
-            const botEmojis = ['🤖', '⚙️', '🔮', '💠', '🔷', '⬡', '◈', '⟐', '△', '◇'];
-            for (let i = 0; i < 20; i++) {
-                const bot = document.createElement('div');
-                bot.className = 'bot';
-                const emoji = botEmojis[Math.floor(Math.random() * botEmojis.length)];
-                const x = Math.random() * 100;
-                const y = Math.random() * 100;
-                const size = Math.random() * 10 + 8;
-                const dur = Math.random() * 20 + 15;
-                const dx = (Math.random() - 0.5) * 20;
-                const dy = (Math.random() - 0.5) * 20;
-                const rot = (Math.random() - 0.5) * 10;
-                
-                bot.style.cssText = `
-                    left: ${x}%; top: ${y}%;
-                    --size: ${size}px; --dur: ${dur}s;
-                    --dx: ${dx}px; --dy: ${dy}px; --rot: ${rot}deg;
-                    animation-delay: ${Math.random() * 15}s;
-                `;
-                bot.textContent = emoji;
-                sf.appendChild(bot);
+            // Create bots (20-25)
+            const botChars = ['⚙','⬡','◈','⟐','△','◇','⬢','⎔','⌬','⏣'];
+            for (let i = 0; i < 22; i++) {
+                bots.push({
+                    x: Math.random() * 2000 - 500,
+                    y: Math.random() * 2000 - 500,
+                    size: Math.random() * 12 + 8,
+                    char: botChars[Math.floor(Math.random() * botChars.length)],
+                    opacity: Math.random() * 0.12 + 0.05,
+                    driftX: (Math.random() - 0.5) * 0.15,
+                    driftY: (Math.random() - 0.5) * 0.15,
+                    rotSpeed: (Math.random() - 0.5) * 0.003,
+                    rotation: Math.random() * Math.PI * 2
+                });
             }
+            
+            let time = 0;
+            function animate() {
+                time += 0.016;
+                ctx.clearRect(0, 0, W, H);
+                
+                // Draw nebulae
+                nebulaColors.forEach(n => {
+                    const gx = n.x * W;
+                    const gy = n.y * H;
+                    const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, n.r);
+                    grad.addColorStop(0, n.color);
+                    grad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(gx - n.r, gy - n.r, n.r * 2, n.r * 2);
+                });
+                
+                // Draw stars
+                stars.forEach(s => {
+                    const twinkle = Math.sin(time * s.twinkleSpeed * 60 + s.twinkleOffset) * 0.3 + 0.7;
+                    const alpha = s.brightness * twinkle;
+                    const size = s.baseSize * (0.8 + twinkle * 0.4);
+                    
+                    // Glow
+                    const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, size * 4);
+                    glow.addColorStop(0, s.color.replace(')', `,${alpha * 0.3})`).replace('rgb', 'rgba'));
+                    glow.addColorStop(1, 'transparent');
+                    ctx.fillStyle = glow;
+                    ctx.fillRect(s.x - size * 4, s.y - size * 4, size * 8, size * 8);
+                    
+                    // Star core
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, size, 0, Math.PI * 2);
+                    ctx.fillStyle = s.color;
+                    ctx.globalAlpha = alpha;
+                    ctx.fill();
+                    
+                    // Diffraction rays for bright stars
+                    if (s.hasRays && alpha > 0.5) {
+                        ctx.globalAlpha = alpha * 0.3;
+                        ctx.strokeStyle = s.color;
+                        ctx.lineWidth = 0.5;
+                        // Horizontal ray
+                        ctx.beginPath();
+                        ctx.moveTo(s.x - s.rayLength, s.y);
+                        ctx.lineTo(s.x + s.rayLength, s.y);
+                        ctx.stroke();
+                        // Vertical ray
+                        ctx.beginPath();
+                        ctx.moveTo(s.x, s.y - s.rayLength * 0.6);
+                        ctx.lineTo(s.x, s.y + s.rayLength * 0.6);
+                        ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                });
+                
+                // Draw meteors
+                meteors.forEach(m => {
+                    m.life++;
+                    if (m.life > m.maxLife) {
+                        m.x = Math.random() * W * 1.5;
+                        m.y = Math.random() * H * 0.3;
+                        m.life = 0;
+                        m.opacity = 0;
+                    }
+                    
+                    if (m.life < 10) m.opacity = m.life / 10;
+                    else if (m.life > m.maxLife - 15) m.opacity = (m.maxLife - m.life) / 15;
+                    
+                    if (m.opacity > 0) {
+                        const tailX = m.x - Math.cos(m.angle) * m.length;
+                        const tailY = m.y - Math.sin(m.angle) * m.length;
+                        const grad = ctx.createLinearGradient(tailX, tailY, m.x, m.y);
+                        grad.addColorStop(0, 'transparent');
+                        grad.addColorStop(1, `rgba(255,255,255,${m.opacity * 0.8})`);
+                        ctx.strokeStyle = grad;
+                        ctx.lineWidth = m.width;
+                        ctx.beginPath();
+                        ctx.moveTo(tailX, tailY);
+                        ctx.lineTo(m.x, m.y);
+                        ctx.stroke();
+                    }
+                    
+                    m.x += Math.cos(m.angle) * m.speed;
+                    m.y += Math.sin(m.angle) * m.speed;
+                });
+                
+                // Draw bots
+                bots.forEach(b => {
+                    b.x += b.driftX;
+                    b.y += b.driftY;
+                    b.rotation += b.rotSpeed;
+                    
+                    // Wrap around
+                    if (b.x < -100) b.x = W + 100;
+                    if (b.x > W + 100) b.x = -100;
+                    if (b.y < -100) b.y = H + 100;
+                    if (b.y > H + 100) b.y = -100;
+                    
+                    ctx.save();
+                    ctx.translate(b.x, b.y);
+                    ctx.rotate(b.rotation);
+                    ctx.globalAlpha = b.opacity;
+                    ctx.font = `${b.size}px sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(b.char, 0, 0);
+                    ctx.restore();
+                });
+                
+                requestAnimationFrame(animate);
+            }
+            animate();
         })();
     </script>
 </body>
