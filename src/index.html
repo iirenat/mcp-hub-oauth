@@ -21,8 +21,13 @@
         
         /* ── Canvas Starfield ── */
         #starCanvas {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            background: radial-gradient(ellipse at center, #0d0d2b 0%, #050510 50%, #000000 100%);
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+            pointer-events: none;
+        }
+        /* Content should be above canvas */
+        header, section, footer, .hero {
+            position: relative;
+            z-index: 2;
         }
         .logo-svg { width: 36px; height: 36px; }
         header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 14px 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(3,3,8,0.6); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); transition: all 0.3s; }
@@ -275,17 +280,17 @@
                 {x: 0.8, y: 0.2, r: 180, color: 'rgba(236,72,153,0.02)'},
             ];
             
-            // Create stars
-            for (let i = 0; i < 300; i++) {
+            // Create stars (30 stars, slow twinkle)
+            for (let i = 0; i < 30; i++) {
                 const size = Math.random() * 2.5 + 0.5;
-                const isBright = Math.random() < 0.15;
+                const isBright = Math.random() < 0.2;
                 stars.push({
-                    x: Math.random() * 2000 - 500,
-                    y: Math.random() * 2000 - 500,
+                    x: Math.random() * W,
+                    y: Math.random() * H,
                     size: isBright ? size * 1.5 : size,
                     baseSize: size,
                     brightness: Math.random() * 0.5 + 0.3,
-                    twinkleSpeed: Math.random() * 0.02 + 0.005,
+                    twinkleSpeed: Math.random() * 0.004 + 0.001,
                     twinkleOffset: Math.random() * Math.PI * 2,
                     color: isBright ? ['#fff','#a5b4fc','#67e8f9','#fbbf24','#f87171','#c084fc'][Math.floor(Math.random()*6)] : '#fff',
                     hasRays: isBright && Math.random() < 0.5,
@@ -293,33 +298,33 @@
                 });
             }
             
-            // Create meteors
-            for (let i = 0; i < 6; i++) {
+            // Create meteors (4 meteors, slow)
+            for (let i = 0; i < 4; i++) {
                 meteors.push({
-                    x: Math.random() * 2000,
-                    y: Math.random() * 500,
+                    x: Math.random() * W * 1.5,
+                    y: Math.random() * H * 0.3,
                     length: Math.random() * 100 + 60,
-                    speed: Math.random() * 8 + 4,
+                    speed: Math.random() * 3 + 1.5,
                     angle: Math.PI / 4 + (Math.random() - 0.5) * 0.3,
                     opacity: 0,
                     life: 0,
-                    maxLife: Math.random() * 60 + 40,
+                    maxLife: Math.random() * 120 + 80,
                     width: Math.random() * 2 + 1
                 });
             }
             
-            // Create bots (20-25)
+            // Create bots (44 bots, more visible)
             const botChars = ['⚙','⬡','◈','⟐','△','◇','⬢','⎔','⌬','⏣'];
-            for (let i = 0; i < 22; i++) {
+            for (let i = 0; i < 44; i++) {
                 bots.push({
-                    x: Math.random() * 2000 - 500,
-                    y: Math.random() * 2000 - 500,
-                    size: Math.random() * 12 + 8,
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    size: Math.random() * 14 + 10,
                     char: botChars[Math.floor(Math.random() * botChars.length)],
-                    opacity: Math.random() * 0.12 + 0.05,
-                    driftX: (Math.random() - 0.5) * 0.15,
-                    driftY: (Math.random() - 0.5) * 0.15,
-                    rotSpeed: (Math.random() - 0.5) * 0.003,
+                    opacity: Math.random() * 0.15 + 0.2,
+                    driftX: (Math.random() - 0.5) * 0.08,
+                    driftY: (Math.random() - 0.5) * 0.08,
+                    rotSpeed: (Math.random() - 0.5) * 0.001,
                     rotation: Math.random() * Math.PI * 2
                 });
             }
@@ -340,41 +345,45 @@
                     ctx.fillRect(gx - n.r, gy - n.r, n.r * 2, n.r * 2);
                 });
                 
-                // Draw stars
+                // Draw stars (behind text, scroll down = stars go down)
+                const scrollY = window.pageYOffset || document.documentElement.scrollTop;
                 stars.forEach(s => {
                     const twinkle = Math.sin(time * s.twinkleSpeed * 60 + s.twinkleOffset) * 0.3 + 0.7;
                     const alpha = s.brightness * twinkle;
                     const size = s.baseSize * (0.8 + twinkle * 0.4);
+                    const sy = s.y + scrollY * 0.3; // Parallax: stars move slower than scroll
                     
-                    // Glow
-                    const glow = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, size * 4);
-                    glow.addColorStop(0, s.color.replace(')', `,${alpha * 0.3})`).replace('rgb', 'rgba'));
-                    glow.addColorStop(1, 'transparent');
-                    ctx.fillStyle = glow;
-                    ctx.fillRect(s.x - size * 4, s.y - size * 4, size * 8, size * 8);
-                    
-                    // Star core
-                    ctx.beginPath();
-                    ctx.arc(s.x, s.y, size, 0, Math.PI * 2);
-                    ctx.fillStyle = s.color;
-                    ctx.globalAlpha = alpha;
-                    ctx.fill();
-                    
-                    // Diffraction rays for bright stars
-                    if (s.hasRays && alpha > 0.5) {
+                    // Only draw if visible
+                    if (sy > -50 && sy < H + 50) {
+                        // Glow
+                        const glow = ctx.createRadialGradient(s.x, sy, 0, s.x, sy, size * 4);
+                        glow.addColorStop(0, s.color);
+                        glow.addColorStop(1, 'transparent');
                         ctx.globalAlpha = alpha * 0.3;
-                        ctx.strokeStyle = s.color;
-                        ctx.lineWidth = 0.5;
-                        // Horizontal ray
+                        ctx.fillStyle = glow;
+                        ctx.fillRect(s.x - size * 4, sy - size * 4, size * 8, size * 8);
+                        
+                        // Star core
                         ctx.beginPath();
-                        ctx.moveTo(s.x - s.rayLength, s.y);
-                        ctx.lineTo(s.x + s.rayLength, s.y);
-                        ctx.stroke();
-                        // Vertical ray
-                        ctx.beginPath();
-                        ctx.moveTo(s.x, s.y - s.rayLength * 0.6);
-                        ctx.lineTo(s.x, s.y + s.rayLength * 0.6);
-                        ctx.stroke();
+                        ctx.arc(s.x, sy, size, 0, Math.PI * 2);
+                        ctx.fillStyle = s.color;
+                        ctx.globalAlpha = alpha;
+                        ctx.fill();
+                        
+                        // Diffraction rays
+                        if (s.hasRays && alpha > 0.5) {
+                            ctx.globalAlpha = alpha * 0.25;
+                            ctx.strokeStyle = s.color;
+                            ctx.lineWidth = 0.5;
+                            ctx.beginPath();
+                            ctx.moveTo(s.x - s.rayLength, sy);
+                            ctx.lineTo(s.x + s.rayLength, sy);
+                            ctx.stroke();
+                            ctx.beginPath();
+                            ctx.moveTo(s.x, sy - s.rayLength * 0.6);
+                            ctx.lineTo(s.x, sy + s.rayLength * 0.6);
+                            ctx.stroke();
+                        }
                     }
                     ctx.globalAlpha = 1;
                 });
@@ -410,27 +419,30 @@
                     m.y += Math.sin(m.angle) * m.speed;
                 });
                 
-                // Draw bots
+                // Draw bots (behind text, slow drift)
                 bots.forEach(b => {
                     b.x += b.driftX;
-                    b.y += b.driftY;
+                    b.y += b.driftY + scrollY * 0.02; // Very slow parallax
                     b.rotation += b.rotSpeed;
                     
                     // Wrap around
-                    if (b.x < -100) b.x = W + 100;
-                    if (b.x > W + 100) b.x = -100;
-                    if (b.y < -100) b.y = H + 100;
-                    if (b.y > H + 100) b.y = -100;
+                    if (b.x < -50) b.x = W + 50;
+                    if (b.x > W + 50) b.x = -50;
+                    if (b.y < -50) b.y = H + 50;
+                    if (b.y > H + 50) b.y = -50;
                     
-                    ctx.save();
-                    ctx.translate(b.x, b.y);
-                    ctx.rotate(b.rotation);
-                    ctx.globalAlpha = b.opacity;
-                    ctx.font = `${b.size}px sans-serif`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(b.char, 0, 0);
-                    ctx.restore();
+                    const by = b.y + scrollY * 0.15;
+                    if (by > -30 && by < H + 30) {
+                        ctx.save();
+                        ctx.translate(b.x, by);
+                        ctx.rotate(b.rotation);
+                        ctx.globalAlpha = b.opacity;
+                        ctx.font = `${b.size}px sans-serif`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(b.char, 0, 0);
+                        ctx.restore();
+                    }
                 });
                 
                 requestAnimationFrame(animate);
