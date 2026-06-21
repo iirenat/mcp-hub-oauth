@@ -17,13 +17,31 @@
             --glow: 0 0 40px rgba(99,102,241,0.15);
         }
         html { scroll-behavior: smooth; }
-        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg-dark); color: var(--text); line-height: 1.7; overflow-x: hidden; }
-        .bg-animated { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
-        .bg-animated .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.12; animation: float 20s ease-in-out infinite; }
-        .bg-animated .orb:nth-child(1) { width: 400px; height: 400px; background: #6366f1; top: -100px; left: -100px; animation-delay: 0s; }
-        .bg-animated .orb:nth-child(2) { width: 300px; height: 300px; background: #06b6d4; top: 50%; right: -100px; animation-delay: -5s; }
-        .bg-animated .orb:nth-child(3) { width: 200px; height: 200px; background: #8b5cf6; bottom: -50px; left: 30%; animation-delay: -10s; }
-        @keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); } 25% { transform: translate(50px, -30px) scale(1.1); } 50% { transform: translate(-20px, 50px) scale(0.9); } 75% { transform: translate(30px, 20px) scale(1.05); } }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: #000; color: var(--text); line-height: 1.7; overflow-x: hidden; }
+        
+        /* ── Starfield Background ── */
+        .starfield {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: radial-gradient(ellipse at center, #0a0a2e 0%, #000000 70%);
+            overflow: hidden;
+        }
+        .star {
+            position: absolute; border-radius: 50%;
+            animation: twinkle var(--dur) ease-in-out infinite alternate;
+        }
+        @keyframes twinkle {
+            0% { opacity: var(--min-opacity); transform: scale(1); }
+            100% { opacity: 1; transform: scale(var(--scale)); }
+        }
+        .bot {
+            position: absolute; font-size: var(--size);
+            animation: botFloat var(--dur) ease-in-out infinite alternate;
+            opacity: 0.6; filter: blur(0.5px);
+        }
+        @keyframes botFloat {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); }
+        }
         .bg-animated .grid { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px); background-size: 60px 60px; }
         .logo-svg { width: 36px; height: 36px; }
         header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 14px 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(3,3,8,0.6); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); transition: all 0.3s; }
@@ -131,12 +149,8 @@
     <!-- USER_DATA -->
     /* USER_DATA */
 
-    <!-- Animated Background -->
-    <div class="bg-animated">
-        <div class="orb"></div>
-        <div class="orb"></div>
-        <div class="orb"></div>
-        <div class="grid"></div>
+    <!-- Starfield Background -->
+    <div class="starfield" id="starfield"></div>
     </div>
 
     <!-- Header -->
@@ -254,6 +268,60 @@
         document.getElementById('contactForm')?.addEventListener('submit', async (e) => { e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); try { const r = await (await fetch('/api/feedback', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(d) })).json(); alert(r.message || 'Sent!'); e.target.reset(); } catch(err) { alert('Sent!'); e.target.reset(); } });
         async function handleAuth(e) { e.preventDefault(); const d = Object.fromEntries(new FormData(e.target)); const r = await (await fetch('/api/auth/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(d) })).json(); if (r.status === 'ok') window.location.reload(); else alert(r.detail || 'Error'); }
         (async () => { try { const r = await fetch('/api/auth/me'); if (r.ok) { const d = await r.json(); if (d.user) { document.getElementById('navAuth').style.display = 'none'; } } } catch(e) {} })();
+
+        // ── Starfield & Bots ──
+        (function() {
+            const sf = document.getElementById('starfield');
+            if (!sf) return;
+            
+            // Generate 200 stars
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 3 + 1;
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                const dur = Math.random() * 4 + 2;
+                const minOp = Math.random() * 0.3 + 0.1;
+                const scale = Math.random() * 1.5 + 0.5;
+                const colors = ['#fff', '#a5b4fc', '#67e8f9', '#fbbf24', '#f87171'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                star.style.cssText = `
+                    width: ${size}px; height: ${size}px;
+                    left: ${x}%; top: ${y}%;
+                    background: ${color};
+                    box-shadow: 0 0 ${size * 2}px ${size}px ${color};
+                    --dur: ${dur}s; --min-opacity: ${minOp}; --scale: ${scale};
+                    animation-delay: ${Math.random() * 5}s;
+                `;
+                sf.appendChild(star);
+            }
+            
+            // Generate 25 bots
+            const botEmojis = ['🤖', '⚙️', '🔮', '💠', '🔷', '⬡', '◈', '⟐'];
+            for (let i = 0; i < 25; i++) {
+                const bot = document.createElement('div');
+                bot.className = 'bot';
+                const emoji = botEmojis[Math.floor(Math.random() * botEmojis.length)];
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                const size = Math.random() * 14 + 10;
+                const dur = Math.random() * 15 + 10;
+                const dx = (Math.random() - 0.5) * 30;
+                const dy = (Math.random() - 0.5) * 30;
+                const rot = (Math.random() - 0.5) * 20;
+                
+                bot.style.cssText = `
+                    left: ${x}%; top: ${y}%;
+                    --size: ${size}px; --dur: ${dur}s;
+                    --dx: ${dx}px; --dy: ${dy}px; --rot: ${rot}deg;
+                    animation-delay: ${Math.random() * 10}s;
+                `;
+                bot.textContent = emoji;
+                sf.appendChild(bot);
+            }
+        })();
     </script>
 </body>
 </html>
