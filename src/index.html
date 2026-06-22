@@ -111,9 +111,26 @@
             <a href="#pricing">Pricing</a>
             <a href="#contact">Contact</a>
         </nav>
-        <div class="nav-btns">
+        <div class="nav-btns" id="navGuest">
             <button class="btn btn-ghost" onclick="openModal('login')">Log in</button>
             <button class="btn btn-primary" onclick="openModal('signup')">Sign up</button>
+        </div>
+        <div class="nav-btns" id="navUser" style="display:none;">
+            <div style="position:relative;">
+                <button class="btn btn-ghost" onclick="toggleProfile()" style="display:flex;align-items:center;gap:8px;">
+                    <div id="userAvatar" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">U</div>
+                    <span id="userName">User</span>
+                </button>
+                <div id="profileMenu" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px;min-width:180px;z-index:100;">
+                    <div style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:4px;">
+                        <div id="profileName" style="font-weight:600;font-size:14px;">User</div>
+                        <div id="profileEmail" style="font-size:12px;color:rgba(255,255,255,0.4);">user@email.com</div>
+                    </div>
+                    <button onclick="location.href='/dashboard'" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;color:#fff;font-size:13px;cursor:pointer;border-radius:8px;">📊 Dashboard</button>
+                    <button onclick="location.href='/settings'" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;color:#fff;font-size:13px;cursor:pointer;border-radius:8px;">⚙️ Settings</button>
+                    <button onclick="doLogout()" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;color:#f87171;font-size:13px;cursor:pointer;border-radius:8px;">🚪 Log out</button>
+                </div>
+            </div>
         </div>
     </header>
     
@@ -248,14 +265,15 @@
             <button onclick="closeModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:18px;cursor:pointer;">×</button>
             <h2 id="modalTitle" style="font-size:20px;font-weight:800;margin-bottom:6px;">Sign up</h2>
             <p style="color:rgba(255,255,255,0.4);font-size:12px;margin-bottom:20px;">Create your free account</p>
-            <a href="/api/auth/google" class="btn btn-ghost btn-lg" style="width:100%;justify-content:center;margin-bottom:8px;background:#fff;color:#333;">Continue with Google</a>
-            <a href="/api/auth/github" class="btn btn-ghost btn-lg" style="width:100%;justify-content:center;margin-bottom:12px;background:#24292e;color:#fff;">Continue with GitHub</a>
-            <div style="display:flex;align-items:center;gap:10px;margin:12px 0;color:rgba(255,255,255,0.3);font-size:11px;"><span style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></span>or<span style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></span></div>
             <form onsubmit="handleAuth(event)" style="display:flex;flex-direction:column;gap:8px;">
                 <input name="email" type="email" placeholder="Email" required style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:10px 13px;color:#fff;font-size:13px;">
                 <input name="password" type="password" placeholder="Password" required style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:10px 13px;color:#fff;font-size:13px;">
-                <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">Continue</button>
+                <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:4px;">Continue</button>
             </form>
+            <p style="margin-top:16px;font-size:12px;color:rgba(255,255,255,0.3);">
+                <span id="switchText">Already have an account?</span>
+                <a href="#" id="switchLink" onclick="switchMode()" style="color:#6366f1;">Log in</a>
+            </p>
         </div>
     </div>
     
@@ -320,8 +338,11 @@
             modalMode = mode;
             document.getElementById('authModal').style.display = 'flex';
             document.getElementById('modalTitle').textContent = mode === 'signup' ? 'Sign up' : 'Log in';
+            document.getElementById('switchText').textContent = mode === 'signup' ? 'Already have an account?' : "Don't have an account?";
+            document.getElementById('switchLink').textContent = mode === 'signup' ? 'Log in' : 'Sign up';
         }
         function closeModal() { document.getElementById('authModal').style.display = 'none'; }
+        function switchMode() { openModal(modalMode === 'signup' ? 'login' : 'signup'); }
         
         // Plan selection
         function selectPlan(el) {
@@ -346,6 +367,13 @@
             } catch(err) { showToast('Message sent!'); }
             e.target.reset();
         }
+        function toggleProfile() {
+            const m = document.getElementById('profileMenu');
+            m.style.display = m.style.display === 'none' ? 'block' : 'none';
+        }
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#navUser')) document.getElementById('profileMenu').style.display = 'none';
+        });
         
         // Auth form
         async function handleAuth(e) {
@@ -354,13 +382,39 @@
             const endpoint = modalMode === 'signup' ? '/api/auth/register' : '/api/auth/login';
             try {
                 const r = await (await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) })).json();
-                if (r.status === 'ok') { closeModal(); showToast('Welcome!'); setTimeout(() => location.reload(), 1000); }
-                else showToast(r.detail || 'Error');
+                if (r.status === 'ok') {
+                    closeModal();
+                    showToast(modalMode === 'signup' ? 'Account created!' : 'Welcome back!');
+                    setTimeout(() => location.reload(), 800);
+                } else showToast(r.detail || 'Error');
             } catch(err) { showToast('Connection error'); }
         }
         
-        // Close modal on outside click
-        document.getElementById('authModal').addEventListener('click', (e) => { if (e.target.id === 'authModal') closeModal(); });
+        // Logout
+        async function doLogout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            showToast('Logged out');
+            setTimeout(() => location.reload(), 500);
+        }
+        
+        // Check auth on load
+        (async function() {
+            try {
+                const r = await fetch('/api/auth/me');
+                if (r.ok) {
+                    const d = await r.json();
+                    if (d.user) {
+                        document.getElementById('navGuest').style.display = 'none';
+                        document.getElementById('navUser').style.display = 'flex';
+                        const name = d.user.name || d.user.email.split('@')[0];
+                        document.getElementById('userName').textContent = name;
+                        document.getElementById('profileName').textContent = name;
+                        document.getElementById('profileEmail').textContent = d.user.email;
+                        document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+                    }
+                }
+            } catch(e) {}
+        })();
     </script>
 </body>
 </html>
