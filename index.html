@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Hub — Manage Your AI Agents</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #000; color: #fff; line-height: 1.6; }
+        
+        /* Background */
+        .bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; background: radial-gradient(ellipse at center, #0a0a2e 0%, #000 70%); }
+        .bg canvas { width: 100%; height: 100%; }
+        
+        /* Header */
+        header { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; font-weight: 800; font-size: 18px; }
+        .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, #6366f1, #06b6d4); border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+        nav { display: flex; align-items: center; gap: 8px; }
+        nav a { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 14px; padding: 8px 14px; border-radius: 8px; transition: all 0.2s; }
+        nav a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+        .nav-btns { display: flex; gap: 8px; margin-left: 16px; }
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 9px; font-size: 14px; font-weight: 600; text-decoration: none; border: none; cursor: pointer; transition: all 0.3s; }
+        .btn-ghost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.15); }
+        .btn-ghost:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); }
+        .btn-primary { background: linear-gradient(135deg, #6366f1, #06b6d4); color: #fff; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.4); }
+        .btn-lg { padding: 14px 28px; font-size: 16px; }
+        
+        /* Hero */
+        .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 120px 40px 80px; }
+        .badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 7px 14px; border-radius: 100px; font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 24px; }
+        .badge-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .hero h1 { font-size: clamp(36px, 6vw, 64px); font-weight: 800; line-height: 1.1; margin-bottom: 20px; letter-spacing: -2px; }
+        .hero h1 span { background: linear-gradient(135deg, #6366f1, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero p { font-size: 18px; color: rgba(255,255,255,0.6); max-width: 520px; margin-bottom: 36px; }
+        .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .stats { display: flex; gap: 50px; margin-top: 60px; }
+        .stat h3 { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #6366f1, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat p { font-size: 12px; color: rgba(255,255,255,0.4); }
+        
+        /* Sections */
+        section { padding: 100px 40px; max-width: 1200px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 50px; }
+        .section-header h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; margin-bottom: 12px; }
+        .section-header p { color: rgba(255,255,255,0.5); font-size: 17px; }
+        
+        /* Features */
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .feature-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 18px; padding: 32px; transition: all 0.3s; }
+        .feature-card:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-4px); }
+        .feature-icon { width: 48px; height: 48px; background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(6,182,212,0.15)); border: 1px solid rgba(99,102,241,0.25); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 18px; }
+        .feature-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+        .feature-card p { color: rgba(255,255,255,0.5); font-size: 14px; }
+        
+        /* Pricing */
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .pricing-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 36px 28px; position: relative; transition: all 0.3s; cursor: pointer; }
+        .pricing-card:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-4px); }
+        .pricing-card.popular { border-color: #6366f1; background: linear-gradient(180deg, rgba(99,102,241,0.08), transparent); }
+        .pricing-card.selected { border-color: #6366f1; box-shadow: 0 0 40px rgba(99,102,241,0.2); }
+        .popular-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #6366f1, #06b6d4); color: #fff; padding: 3px 14px; border-radius: 100px; font-size: 11px; font-weight: 600; }
+        .pricing-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+        .pricing-card .price { font-size: 42px; font-weight: 800; margin: 14px 0; }
+        .pricing-card .price span { font-size: 14px; color: rgba(255,255,255,0.4); font-weight: 400; }
+        .pricing-card ul { list-style: none; margin: 20px 0; }
+        .pricing-card li { padding: 6px 0; color: rgba(255,255,255,0.5); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+        .pricing-card li::before { content: '→'; color: #06b6d4; font-weight: 700; font-size: 12px; }
+        .pricing-card .btn { width: 100%; text-align: center; display: block; }
+        
+        /* Contact */
+        .contact-section { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 22px; padding: 50px; text-align: center; }
+        .contact-form { max-width: 460px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+        .contact-form input, .contact-form textarea { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 13px 16px; color: #fff; font-size: 14px; font-family: inherit; }
+        .contact-form input:focus, .contact-form textarea:focus { outline: none; border-color: #6366f1; }
+        .contact-form textarea { min-height: 100px; resize: vertical; }
+        
+        /* Footer */
+        footer { padding: 30px 40px; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+        footer p { color: rgba(255,255,255,0.3); font-size: 12px; }
+        footer nav { display: flex; gap: 20px; }
+        footer nav a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 12px; }
+        footer nav a:hover { color: #fff; }
+        
+        /* Toast */
+        #toast { display: none; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 12px 24px; border-radius: 10px; font-size: 14px; z-index: 9999; }
+        
+        /* Mobile */
+        @media (max-width: 768px) {
+            header { padding: 12px 16px; }
+            nav { display: none; }
+            .hero { padding: 90px 16px 50px; }
+            .hero h1 { font-size: 32px; }
+            .stats { flex-direction: column; gap: 20px; }
+            section { padding: 50px 16px; }
+            .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+            .contact-section { padding: 28px 18px; }
+            footer { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg"><canvas id="bgCanvas"></canvas></div>
+    
+    <header>
+        <a href="/" class="logo"><div class="logo-icon">+</div>MCP Hub</a>
+        <nav>
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#contact">Contact</a>
+        </nav>
+        <div class="nav-btns" id="navGuest">
+            <button class="btn btn-ghost" onclick="openModal('login')">Log in</button>
+            <button class="btn btn-primary" onclick="openModal('signup')">Sign up</button>
+        </div>
+        <div class="nav-btns" id="navUser" style="display:none;">
+            <div style="position:relative;">
+                <button class="btn btn-ghost" onclick="toggleProfile()" style="display:flex;align-items:center;gap:8px;">
+                    <div id="userAvatar" style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;">U</div>
+                    <span id="userName">User</span>
+                </button>
+                <div id="profileMenu" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px;min-width:180px;z-index:100;">
+                    <div style="padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:4px;">
+                        <div id="profileName" style="font-weight:600;font-size:14px;">User</div>
+                        <div id="profileEmail" style="font-size:12px;color:rgba(255,255,255,0.4);">user@email.com</div>
+                    </div>
+                    <button onclick="location.href='/dashboard'" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;color:#fff;font-size:13px;cursor:pointer;border-radius:8px;">📊 Dashboard</button>
+                    <button onclick="location.href='/settings'" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;color:#fff;font-size:13px;cursor:pointer;border-radius:8px;">⚙️ Settings</button>
+                    <button onclick="doLogout()" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;color:#f87171;font-size:13px;cursor:pointer;border-radius:8px;">🚪 Log out</button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <section class="hero">
+        <div class="badge"><span class="badge-dot"></span> Now in Public Beta</div>
+        <h1>Manage your <span>AI agents</span><br>like a pro</h1>
+        <p>One dashboard to connect, secure, and monitor all your AI agents. OAuth, RBAC, audit logs — built for teams.</p>
+        <div class="hero-btns">
+            <a href="#pricing" class="btn btn-primary btn-lg">Get Started Free</a>
+            <a href="https://github.com/iirenat/mcp-hub-oauth" class="btn btn-ghost btn-lg">⭐ GitHub</a>
+        </div>
+        <div class="stats">
+            <div class="stat"><h3>8+</h3><p>MCP Servers</p></div>
+            <div class="stat"><h3>OAuth</h3><p>Enterprise SSO</p></div>
+            <div class="stat"><h3>RBAC</h3><p>Access Control</p></div>
+            <div class="stat"><h3>MIT</h3><p>Open Source</p></div>
+        </div>
+    </section>
+    
+    <section id="features">
+        <div class="section-header">
+            <h2>Everything you need</h2>
+            <p>Enterprise-grade security for AI agents</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📂</div>
+                <h3>MCP Server Catalog</h3>
+                <p>Browse and connect to GitHub, Slack, Notion, PostgreSQL, and more.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>OAuth 2.0 + SSO</h3>
+                <p>Enterprise authentication with Google, GitHub, or your SSO provider.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>Role-Based Access</h3>
+                <p>Control who accesses which agents. Admin, developer, viewer roles.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📝</div>
+                <h3>Audit Logging</h3>
+                <p>Track every request and action. Export logs for compliance.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⏱️</div>
+                <h3>Rate Limiting</h3>
+                <p>Prevent abuse with per-user and per-agent limits.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Real-Time Monitoring</h3>
+                <p>Live dashboards, health checks, and alerts.</p>
+            </div>
+        </div>
+    </section>
+    
+    <section id="pricing">
+        <div class="section-header">
+            <h2>Simple pricing</h2>
+            <p>Start free, scale when you need to</p>
+        </div>
+        <div class="pricing-grid">
+            <div class="pricing-card" onclick="selectPlan(this)">
+                <h3>Free</h3>
+                <div class="price">$0<span>/mo</span></div>
+                <ul>
+                    <li>1 agent</li>
+                    <li>3 MCP servers</li>
+                    <li>Basic OAuth</li>
+                    <li>100 audit logs</li>
+                </ul>
+                <button class="btn btn-ghost" onclick="event.stopPropagation(); openModal('signup')">Get Started</button>
+            </div>
+            <div class="pricing-card popular" onclick="selectPlan(this)">
+                <div class="popular-badge">Most Popular</div>
+                <h3>Pro</h3>
+                <div class="price">$6.99<span>/mo</span></div>
+                <ul>
+                    <li>Up to 10 agents</li>
+                    <li>50 MCP servers</li>
+                    <li>OAuth + SSO</li>
+                    <li>10K audit logs</li>
+                    <li>Rate limiting</li>
+                    <li>Email support</li>
+                </ul>
+                <button class="btn btn-primary" onclick="event.stopPropagation(); openModal('signup')">Start Free Trial</button>
+            </div>
+            <div class="pricing-card" onclick="selectPlan(this)">
+                <h3>Enterprise</h3>
+                <div class="price">$29.99<span>/mo</span></div>
+                <ul>
+                    <li>Unlimited agents</li>
+                    <li>Unlimited servers</li>
+                    <li>OAuth + SSO + SAML</li>
+                    <li>Unlimited audit logs</li>
+                    <li>SLA 99.9%</li>
+                    <li>24/7 support</li>
+                </ul>
+                <button class="btn btn-ghost" onclick="event.stopPropagation(); openModal('signup')">Contact Sales</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Updates Carousel -->
+    <section id="updates" style="padding:80px 0;overflow:hidden;">
+        <div style="max-width:1200px;margin:0 auto;padding:0 40px;">
+            <div class="section-header" style="text-align:center;margin-bottom:40px;">
+                <h2>What's new</h2>
+                <p style="color:rgba(255,255,255,0.5);">Latest updates and releases</p>
+            </div>
+        </div>
+        <div id="updatesScroll" style="display:flex;gap:20px;overflow-x:auto;padding:0 40px 20px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;">
+            <div class="update-card" style="min-width:320px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:18px;overflow:hidden;scroll-snap-align:start;flex-shrink:0;">
+                <div style="height:140px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:42px;">🚀</div>
+                <div style="padding:20px;">
+                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;">June 26, 2026</div>
+                    <h3 style="font-size:16px;font-weight:700;margin-bottom:6px;">v3.0 — Complete Redesign</h3>
+                    <p style="font-size:13px;color:rgba(255,255,255,0.5);">New dashboard, user accounts, and real-time monitoring. Full UI overhaul.</p>
+                </div>
+            </div>
+            <div class="update-card" style="min-width:320px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:18px;overflow:hidden;scroll-snap-align:start;flex-shrink:0;">
+                <div style="height:140px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:42px;">🔐</div>
+                <div style="padding:20px;">
+                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;">June 25, 2026</div>
+                    <h3 style="font-size:16px;font-weight:700;margin-bottom:6px;">OAuth 2.0 + SSO</h3>
+                    <p style="font-size:13px;color:rgba(255,255,255,0.5);">Google and GitHub login now available. Enterprise SSO coming soon.</p>
+                </div>
+            </div>
+            <div class="update-card" style="min-width:320px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:18px;overflow:hidden;scroll-snap-align:start;flex-shrink:0;">
+                <div style="height:140px;background:linear-gradient(135deg,#8b5cf6,#a855f7);display:flex;align-items:center;justify-content:center;font-size:42px;">📊</div>
+                <div style="padding:20px;">
+                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;">June 24, 2026</div>
+                    <h3 style="font-size:16px;font-weight:700;margin-bottom:6px;">Real-Time Dashboard</h3>
+                    <p style="font-size:13px;color:rgba(255,255,255,0.5);">Live agent monitoring, usage stats, and health checks in one place.</p>
+                </div>
+            </div>
+            <div class="update-card" style="min-width:320px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:18px;overflow:hidden;scroll-snap-align:start;flex-shrink:0;">
+                <div style="height:140px;background:linear-gradient(135deg,#ec4899,#f43f5e);display:flex;align-items:center;justify-content:center;font-size:42px;">⚡</div>
+                <div style="padding:20px;">
+                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;">June 23, 2026</div>
+                    <h3 style="font-size:16px;font-weight:700;margin-bottom:6px;">Rate Limiting</h3>
+                    <p style="font-size:13px;color:rgba(255,255,255,0.5);">Per-user and per-agent rate limits. Prevent abuse and control costs.</p>
+                </div>
+            </div>
+            <div class="update-card" style="min-width:320px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:18px;overflow:hidden;scroll-snap-align:start;flex-shrink:0;">
+                <div style="height:140px;background:linear-gradient(135deg,#10b981,#059669);display:flex;align-items:center;justify-content:center;font-size:42px;">📝</div>
+                <div style="padding:20px;">
+                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;">June 22, 2026</div>
+                    <h3 style="font-size:16px;font-weight:700;margin-bottom:6px;">Audit Logging</h3>
+                    <p style="font-size:13px;color:rgba(255,255,255,0.5);">Track every request and action. Export logs for compliance.</p>
+                </div>
+            </div>
+            <div class="update-card" style="min-width:320px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:18px;overflow:hidden;scroll-snap-align:start;flex-shrink:0;">
+                <div style="height:140px;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:42px;">👥</div>
+                <div style="padding:20px;">
+                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;">June 21, 2026</div>
+                    <h3 style="font-size:16px;font-weight:700;margin-bottom:6px;">Role-Based Access</h3>
+                    <p style="font-size:13px;color:rgba(255,255,255,0.5);">Admin, developer, and viewer roles. Per-agent permissions.</p>
+                </div>
+            </div>
+            <div class="update-card" style="min-width:320px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:18px;overflow:hidden;scroll-snap-align:start;flex-shrink:0;">
+                <div style="height:140px;background:linear-gradient(135deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;font-size:42px;">📂</div>
+                <div style="padding:20px;">
+                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;">June 20, 2026</div>
+                    <h3 style="font-size:16px;font-weight:700;margin-bottom:6px;">MCP Server Catalog</h3>
+                    <p style="font-size:13px;color:rgba(255,255,255,0.5);">Browse and connect to 8+ pre-configured MCP servers.</p>
+                </div>
+            </div>
+            <div class="update-card" style="min-width:320px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:18px;overflow:hidden;scroll-snap-align:start;flex-shrink:0;">
+                <div style="height:140px;background:linear-gradient(135deg,#06b6d4,#0891b2);display:flex;align-items:center;justify-content:center;font-size:42px;">🎉</div>
+                <div style="padding:20px;">
+                    <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;">June 19, 2026</div>
+                    <h3 style="font-size:16px;font-weight:700;margin-bottom:6px;">Public Beta Launch</h3>
+                    <p style="font-size:13px;color:rgba(255,255,255,0.5);">MCP Hub is now available. Free tier for everyone.</p>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:20px;">
+            <button onclick="scrollUpdates(-1)" style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;cursor:pointer;font-size:18px;">←</button>
+            <button onclick="scrollUpdates(1)" style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#fff;cursor:pointer;font-size:18px;">→</button>
+        </div>
+    </section>
+
+    <section id="contact">
+        <div class="contact-section">
+            <h2>Get in touch</h2>
+            <p style="color:rgba(255,255,255,0.5);margin-bottom:24px;">Questions? Drop us a message.</p>
+            <form class="contact-form" onsubmit="submitContact(event)">
+                <input name="name" placeholder="Name" required>
+                <input name="email" type="email" placeholder="Email" required>
+                <textarea name="message" placeholder="Message" required></textarea>
+                <button type="submit" class="btn btn-primary btn-lg">Send Message</button>
+            </form>
+        </div>
+    </section>
+    
+    <footer>
+        <p>© 2026 MCP Hub. Open source MIT.</p>
+        <nav>
+            <a href="https://github.com/iirenat/mcp-hub-oauth">GitHub</a>
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#contact">Contact</a>
+        </nav>
+    </footer>
+    
+    <!-- Auth Modal -->
+    <div id="authModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;">
+        <div style="background:#0a0a14;border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:36px;max-width:380px;width:90%;text-align:center;position:relative;">
+            <button onclick="closeModal()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:18px;cursor:pointer;">×</button>
+            <h2 id="modalTitle" style="font-size:20px;font-weight:800;margin-bottom:6px;">Sign up</h2>
+            <p style="color:rgba(255,255,255,0.4);font-size:12px;margin-bottom:20px;">Create your free account</p>
+            <form onsubmit="handleAuth(event)" style="display:flex;flex-direction:column;gap:8px;">
+                <input name="email" type="email" placeholder="Email" required style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:10px 13px;color:#fff;font-size:13px;">
+                <input name="password" type="password" placeholder="Password" required style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:10px 13px;color:#fff;font-size:13px;">
+                <button type="submit" class="btn btn-primary btn-lg" style="width:100%;margin-top:4px;">Continue</button>
+            </form>
+            <p style="margin-top:16px;font-size:12px;color:rgba(255,255,255,0.3);">
+                <span id="switchText">Already have an account?</span>
+                <a href="#" id="switchLink" onclick="switchMode()" style="color:#6366f1;">Log in</a>
+            </p>
+        </div>
+    </div>
+    
+    <div id="toast"></div>
+    
+    <script>
+        // Canvas background
+        (function() {
+            const canvas = document.getElementById('bgCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let W = canvas.width = window.innerWidth;
+            let H = canvas.height = window.innerHeight;
+            window.addEventListener('resize', () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; });
+            
+            const stars = [];
+            for (let i = 0; i < 100; i++) {
+                stars.push({ x: Math.random()*W, y: Math.random()*H, size: Math.random()*2+0.5, speed: Math.random()*0.001+0.0005, phase: Math.random()*Math.PI*2 });
+            }
+            const bots = [];
+            const botChars = ['⚙','⬡','◈','⟐','△','◇'];
+            for (let i = 0; i < 15; i++) {
+                bots.push({ x: Math.random()*W, y: Math.random()*H, size: Math.random()*12+8, char: botChars[Math.floor(Math.random()*botChars.length)], opacity: Math.random()*0.15+0.05, dx: (Math.random()-0.5)*0.1, dy: (Math.random()-0.5)*0.1 });
+            }
+            
+            let t = 0;
+            function draw() {
+                t += 0.01;
+                ctx.clearRect(0,0,W,H);
+                
+                // Stars
+                stars.forEach(s => {
+                    const alpha = 0.3 + Math.sin(t * s.speed * 60 + s.phase) * 0.3;
+                    ctx.globalAlpha = alpha;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+                    ctx.fillStyle = '#fff';
+                    ctx.fill();
+                });
+                
+                // Bots
+                bots.forEach(b => {
+                    b.x += b.dx; b.y += b.dy;
+                    if (b.x < -50) b.x = W+50; if (b.x > W+50) b.x = -50;
+                    if (b.y < -50) b.y = H+50; if (b.y > H+50) b.y = -50;
+                    ctx.globalAlpha = b.opacity;
+                    ctx.font = b.size + 'px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(b.char, b.x, b.y);
+                });
+                
+                ctx.globalAlpha = 1;
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+        
+        // Modal
+        let modalMode = 'signup';
+        function openModal(mode) {
+            modalMode = mode;
+            document.getElementById('authModal').style.display = 'flex';
+            document.getElementById('modalTitle').textContent = mode === 'signup' ? 'Sign up' : 'Log in';
+            document.getElementById('switchText').textContent = mode === 'signup' ? 'Already have an account?' : "Don't have an account?";
+            document.getElementById('switchLink').textContent = mode === 'signup' ? 'Log in' : 'Sign up';
+        }
+        function closeModal() { document.getElementById('authModal').style.display = 'none'; }
+        function switchMode() { openModal(modalMode === 'signup' ? 'login' : 'signup'); }
+        
+        // Plan selection
+        function selectPlan(el) {
+            document.querySelectorAll('.pricing-card').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+        
+        // Toast
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.style.display = 'block'; t.style.opacity = '1';
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.style.display = 'none', 300); }, 3000);
+        }
+        
+        // Updates carousel scroll
+        function scrollUpdates(dir) {
+            const el = document.getElementById('updatesScroll');
+            if (el) el.scrollBy({ left: dir * 340, behavior: 'smooth' });
+        }
+        
+        // Contact form
+        async function submitContact(e) {
+            e.preventDefault();
+            const d = Object.fromEntries(new FormData(e.target));
+            try {
+                const r = await (await fetch('/api/feedback', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) })).json();
+                showToast(r.message || 'Message sent!');
+            } catch(err) { showToast('Message sent!'); }
+            e.target.reset();
+        }
+        function toggleProfile() {
+            const m = document.getElementById('profileMenu');
+            m.style.display = m.style.display === 'none' ? 'block' : 'none';
+        }
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#navUser')) document.getElementById('profileMenu').style.display = 'none';
+        });
+        
+        // Auth form
+        async function handleAuth(e) {
+            e.preventDefault();
+            const d = Object.fromEntries(new FormData(e.target));
+            const endpoint = modalMode === 'signup' ? '/api/auth/register' : '/api/auth/login';
+            try {
+                const r = await (await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) })).json();
+                if (r.status === 'ok') {
+                    closeModal();
+                    showToast(modalMode === 'signup' ? 'Account created!' : 'Welcome back!');
+                    setTimeout(() => location.reload(), 800);
+                } else showToast(r.detail || 'Error');
+            } catch(err) { showToast('Connection error'); }
+        }
+        
+        // Logout
+        async function doLogout() {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            showToast('Logged out');
+            setTimeout(() => location.reload(), 500);
+        }
+        
+        // Check auth on load
+        (async function() {
+            try {
+                const r = await fetch('/api/auth/me');
+                if (r.ok) {
+                    const d = await r.json();
+                    if (d.user) {
+                        document.getElementById('navGuest').style.display = 'none';
+                        document.getElementById('navUser').style.display = 'flex';
+                        const name = d.user.name || d.user.email.split('@')[0];
+                        document.getElementById('userName').textContent = name;
+                        document.getElementById('profileName').textContent = name;
+                        document.getElementById('profileEmail').textContent = d.user.email;
+                        document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+                    }
+                }
+            } catch(e) {}
+        })();
+    </script>
+</body>
+</html>
