@@ -95,9 +95,14 @@ async def health():
 async def reg(req: Reg, resp: Response):
     uid = hashlib.md5(req.email.encode()).hexdigest()[:12]
     pw = hashlib.sha256(req.password.encode()).hexdigest()
+    d = db()
     try:
-        d = db(); d.execute("INSERT INTO users (id,email,password,name) VALUES (?,?,?,?)", (uid, req.email, pw, req.name)); d.commit(); d.close()
-    except: d.close(); raise HTTPException(400, "Email already registered")
+        d.execute("INSERT INTO users (id,email,password,name) VALUES (?,?,?,?)", (uid, req.email, pw, req.name))
+        d.commit()
+    except Exception as e:
+        d.close()
+        raise HTTPException(400, "Email already registered")
+    d.close()
     tok = secrets.token_hex(32)
     db().execute("INSERT INTO sessions (token,user_id,expires_at) VALUES (?,?,datetime('now','+30 days'))", (tok, uid))
     resp.set_cookie("sess", tok, httponly=True, max_age=30*24*3600, samesite="lax")
