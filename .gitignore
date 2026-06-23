@@ -1,6 +1,5 @@
-test_*.py
-test_*.json
-memory.json
+app.db
+app.db-journal
+__pycache__
 *.pyc
-__pycache__/
-.env
+.venv

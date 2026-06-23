@@ -1,128 +1,216 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>MCP Hub</title>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MCP Hub — Manage your AI agents</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:system-ui,sans-serif;background:#000;color:#fff;line-height:1.6;min-height:100vh}
-header{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.7);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.1)}
+:root{--bg:#0a0a0f;--card:#111118;--border:#1a1a2e;--text:#e0e0e0;--muted:#666;--accent:#6366f1;--accent2:#06b6d4;--green:#10b981;--red:#ef4444;--yellow:#f59e0b}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+header{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;background:rgba(10,10,15,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
 .logo{color:#fff;text-decoration:none;font-weight:800;font-size:18px}
-.logo span{background:linear-gradient(135deg,#6366f1,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .nav{display:flex;gap:16px;align-items:center}
 .nav a{color:rgba(255,255,255,.6);text-decoration:none;font-size:14px}
 .nav a:hover{color:#fff}
-.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;text-decoration:none;display:inline-block}
+.btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;text-decoration:none;display:inline-block;transition:opacity .2s}
+.btn:hover{opacity:.85}
 .btn-ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.2)}
-.btn-primary{background:linear-gradient(135deg,#6366f1,#06b6d4);color:#fff}
-.hero{padding:120px 24px 80px;text-align:center;max-width:800px;margin:0 auto}
-.hero h1{font-size:clamp(32px,5vw,56px);font-weight:800;line-height:1.1;margin-bottom:16px}
-.hero h1 span{background:linear-gradient(135deg,#6366f1,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hero p{color:rgba(255,255,255,.5);font-size:18px;margin-bottom:32px}
-.hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.features{padding:80px 24px;max-width:1000px;margin:0 auto}
-.features h2{text-align:center;font-size:32px;margin-bottom:40px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:28px}
-.card h3{font-size:16px;margin-bottom:8px}
-.card p{color:rgba(255,255,255,.4);font-size:14px}
-.pricing{padding:80px 24px;max-width:1000px;margin:0 auto}
-.pricing h2{text-align:center;font-size:32px;margin-bottom:40px}
-.price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
-.price-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:32px;text-align:center}
-.price-card.popular{border-color:#6366f1}
-.price-card h3{font-size:18px;margin-bottom:8px}
-.price-card .price{font-size:36px;font-weight:800;margin:12px 0}
-.price-card .price span{font-size:14px;color:rgba(255,255,255,.4)}
-.price-card ul{list-style:none;margin:16px 0;text-align:left}
-.price-card li{padding:4px 0;color:rgba(255,255,255,.5);font-size:13px}
-.price-card li::before{content:"\\2713 ";color:#06b6d4}
-footer{padding:40px 24px;text-align:center;color:rgba(255,255,255,.3);font-size:13px;border-top:1px solid rgba(255,255,255,.08)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-danger{background:var(--red);color:#fff;padding:4px 10px;font-size:12px}
+.btn-sm{padding:6px 12px;font-size:12px}
+.container{max-width:1100px;margin:0 auto;padding:80px 24px 40px}
+.section{margin-bottom:40px}
+.section-title{font-size:20px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.card h3{font-size:15px;margin-bottom:6px}
+.card p{color:var(--muted);font-size:13px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.stat-val{font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-label{font-size:12px;color:var(--muted);margin-top:4px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:13px}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge-green{background:rgba(16,185,129,.15);color:var(--green)}
+.badge-yellow{background:rgba(245,158,11,.15);color:var(--yellow)}
+.badge-blue{background:rgba(99,102,241,.15);color:var(--accent)}
+.input{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:#fff;font-size:14px;margin-bottom:10px;font-family:inherit}
+.input:focus{outline:none;border-color:var(--accent)}
 .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
 .modal.open{display:flex}
-.modal-box{background:#111;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:32px;max-width:360px;width:90%}
-.modal-box h2{font-size:20px;margin-bottom:16px}
-.modal-box input{width:100%;padding:12px;margin-bottom:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:14px}
-.modal-box input:focus{outline:none;border-color:#6366f1}
-.modal-box .btn{width:100%;margin-top:8px}
-.toast{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.1);backdrop-filter:blur(10px);padding:12px 24px;border-radius:8px;font-size:14px;z-index:300}
-.user-menu{position:relative}
-.user-btn{display:flex;align-items:center;gap:8px;padding:6px 12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;cursor:pointer;font-size:14px}
-.user-btn .avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
-.dropdown{display:none;position:absolute;top:100%;right:0;margin-top:8px;background:#111;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px;min-width:180px;z-index:100}
-.dropdown.open{display:block}
-.dropdown a,.dropdown button{display:block;width:100%;text-align:left;padding:10px 14px;background:none;border:none;color:#fff;font-size:13px;cursor:pointer;border-radius:8px;text-decoration:none}
-.dropdown a:hover,.dropdown button:hover{background:rgba(255,255,255,.05)}
-.dropdown .logout{color:#f87171}
-@media(max-width:768px){.nav{display:none}.hero h1{font-size:28px}.grid,.price-grid{grid-template-columns:1fr}}
-</style></head><body>
+.modal-box{background:#111;border:1px solid var(--border);border-radius:16px;padding:28px;max-width:400px;width:90%}
+.modal-box h2{font-size:18px;margin-bottom:16px}
+.form-row{display:flex;gap:8px}
+.form-row .input{flex:1}
+.toast{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);padding:12px 24px;border-radius:8px;font-size:14px;z-index:300}
+.toast.show{display:block}
+.tabs{display:flex;gap:4px;margin-bottom:16px}
+.tab{padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--muted);border:1px solid transparent}
+.tab.active{background:var(--card);color:#fff;border-color:var(--border)}
+.tab:hover{color:#fff}
+.price-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.price-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;text-align:center}
+.price-card.popular{border-color:var(--accent)}
+.price-card h3{font-size:16px;margin-bottom:4px}
+.price-card .price{font-size:32px;font-weight:800;margin:8px 0}
+.price-card .price span{font-size:13px;color:var(--muted)}
+.price-card ul{list-style:none;margin:12px 0;text-align:left}
+.price-card li{padding:3px 0;color:var(--muted);font-size:13px}
+.price-card li::before{content:"✓ ";color:var(--accent2)}
+footer{padding:32px 24px;text-align:center;color:var(--muted);font-size:12px;border-top:1px solid var(--border)}
+@media(max-width:768px){.container{padding:70px 16px 30px}.grid,.stat-grid,.price-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
 <header>
-<a href="/" class="logo">MCP <span>Hub</span></a>
-<nav><a href="#features">Features</a><a href="#pricing">Pricing</a></nav>
-<div id="guestBtns">
-<button class="btn btn-ghost" onclick="openModal('login')">Log in</button>
-<button class="btn btn-primary" onclick="openModal('signup')">Sign up</button>
-</div>
-<div id="userBtns" style="display:none" class="user-menu">
-<button class="user-btn" onclick="toggleDrop()">
-<div class="avatar" id="uAv">U</div>
-<span id="uName">User</span>
-</button>
-<div class="dropdown" id="uDrop">
-<a href="/dashboard">&#128202; Dashboard</a>
-<a href="/settings">&#9881; Settings</a>
-<button class="logout" onclick="logout()">&#128682; Log out</button>
-</div>
-</div>
+  <a href="/" class="logo">MCP <span>Hub</span></a>
+  <nav class="nav" id="nav">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <button class="btn btn-ghost" onclick="openModal('login')">Log in</button>
+    <button class="btn btn-primary" onclick="openModal('signup')">Sign up</button>
+  </nav>
+  <div id="userNav" style="display:none;align-items:center;gap:12px">
+    <a href="/dashboard" style="color:var(--muted);text-decoration:none;font-size:13px">Dashboard</a>
+    <span id="userPlan" class="badge badge-blue" style="font-size:11px"></span>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">Log out</button>
+  </div>
 </header>
-<section class="hero">
-<h1>Manage your <span>AI agents</span> like a pro</h1>
-<p>One dashboard to connect, secure, and monitor all your AI agents.</p>
-<div class="hero-btns">
-<button class="btn btn-primary" onclick="openModal('signup')">Get Started Free</button>
-<a href="https://github.com/iirenat/mcp-hub-oauth" class="btn btn-ghost">&#11088; GitHub</a>
+
+<div class="container">
+  <!-- Hero -->
+  <section style="text-align:center;padding:60px 0 40px">
+    <h1 style="font-size:clamp(28px,5vw,48px);font-weight:800;line-height:1.1;margin-bottom:16px">
+      Manage your <span style="background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent">AI agents</span> like a pro
+    </h1>
+    <p style="color:var(--muted);font-size:17px;max-width:500px;margin:0 auto 28px">Connect, secure, and monitor all your AI agents and MCP servers from one dashboard.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="openModal('signup')">Get Started Free</button>
+      <a href="#features" class="btn btn-ghost">Learn more</a>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section" id="features">
+    <h2 class="section-title">Everything you need</h2>
+    <div class="grid">
+      <div class="card"><h3>📁 MCP Server Catalog</h3><p>Browse and connect to GitHub, Slack, Notion, PostgreSQL, and more.</p></div>
+      <div class="card"><h3>🤖 Agent Management</h3><p>Create, configure, and monitor your AI agents with real-time status.</p></div>
+      <div class="card"><h3>🔒 Secure Auth</h3><p>Session-based authentication with secure cookies.</p></div>
+      <div class="card"><h3>📊 Audit Logging</h3><p>Track every action. Export logs for compliance.</p></div>
+      <div class="card"><h3>⏱ Rate Limiting</h3><p>Per-user and per-agent limits to prevent abuse.</p></div>
+      <div class="card"><h3>📈 Real-Time Stats</h3><p>Live dashboards, health checks, and usage analytics.</p></div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="section" id="pricing">
+    <h2 class="section-title">Simple pricing</h2>
+    <div class="price-grid">
+      <div class="price-card">
+        <h3>Free</h3>
+        <div class="price">$0<span>/mo</span></div>
+        <ul><li>1 agent</li><li>3 MCP servers</li><li>Community support</li></ul>
+        <button class="btn btn-ghost" style="width:100%" onclick="openModal('signup')">Get Started</button>
+      </div>
+      <div class="price-card popular">
+        <h3>Pro</h3>
+        <div class="price">$6.99<span>/mo</span></div>
+        <ul><li>10 agents</li><li>50 MCP servers</li><li>Email support</li><li>Audit logs</li></ul>
+        <button class="btn btn-primary" style="width:100%" onclick="openModal('signup')">Start Trial</button>
+      </div>
+      <div class="price-card">
+        <h3>Enterprise</h3>
+        <div class="price">$29.99<span>/mo</span></div>
+        <ul><li>100 agents</li><li>Unlimited servers</li><li>24/7 support</li><li>Full audit trail</li></ul>
+        <button class="btn btn-ghost" style="width:100%" onclick="openModal('signup')">Contact Sales</button>
+      </div>
+    </div>
+  </section>
 </div>
-</section>
-<section class="features" id="features">
-<h2>Everything you need</h2>
-<div class="grid">
-<div class="card"><h3>&#128193; MCP Server Catalog</h3><p>Browse and connect to GitHub, Slack, Notion, PostgreSQL, and more.</p></div>
-<div class="card"><h3>&#128274; OAuth 2.0 + SSO</h3><p>Enterprise authentication with Google, GitHub, or your SSO provider.</p></div>
-<div class="card"><h3>&#128101; Role-Based Access</h3><p>Control who accesses which agents. Admin, developer, viewer roles.</p></div>
-<div class="card"><h3>&#128221; Audit Logging</h3><p>Track every request and action. Export logs for compliance.</p></div>
-<div class="card"><h3>&#9201; Rate Limiting</h3><p>Prevent abuse with per-user and per-agent limits.</p></div>
-<div class="card"><h3>&#128202; Real-Time Monitoring</h3><p>Live dashboards, health checks, and alerts.</p></div>
-</div>
-</section>
-<section class="pricing" id="pricing">
-<h2>Simple pricing</h2>
-<div class="price-grid">
-<div class="price-card"><h3>Free</h3><div class="price">$0<span>/mo</span></div><ul><li>1 agent</li><li>3 MCP servers</li><li>Basic OAuth</li></ul><button class="btn btn-ghost" style="width:100%" onclick="openModal('signup')">Get Started</button></div>
-<div class="price-card popular"><h3>Pro</h3><div class="price">$6.99<span>/mo</span></div><ul><li>Up to 10 agents</li><li>50 MCP servers</li><li>OAuth + SSO</li><li>Email support</li></ul><button class="btn btn-primary" style="width:100%" onclick="openModal('signup')">Start Trial</button></div>
-<div class="price-card"><h3>Enterprise</h3><div class="price">$29.99<span>/mo</span></div><ul><li>Unlimited agents</li><li>Unlimited servers</li><li>SLA 99.9%</li><li>24/7 support</li></ul><button class="btn btn-ghost" style="width:100%" onclick="openModal('signup')">Contact Sales</button></div>
-</div>
-</section>
-<footer>&copy; 2026 MCP Hub. Open source MIT.</footer>
-<div class="modal" id="authModal">
-<div class="modal-box">
-<h2 id="mTitle">Sign up</h2>
-<form onsubmit="auth(event)">
-<input name="email" type="email" placeholder="Email" required>
-<input name="password" type="password" placeholder="Password" required>
-<input name="name" placeholder="Name (optional)" id="mName">
-<button type="submit" class="btn btn-primary" id="mBtn">Sign up</button>
-</form>
-<p style="margin-top:12px;font-size:12px;color:rgba(255,255,255,.3)"><span id="mSwitch">Have an account?</span> <a href="#" onclick="switchMode()" style="color:#6366f1" id="mSwitchLink">Log in</a></p>
-</div>
-</div>
+
+<footer>© 2026 MCP Hub. All rights reserved.</footer>
+
+<!-- Modals -->
+<div class="modal" id="loginModal"><div class="modal-box">
+  <h2>Log in</h2>
+  <input class="input" id="loginEmail" type="email" placeholder="Email">
+  <input class="input" id="loginPass" type="password" placeholder="Password">
+  <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Log in</button>
+  <p style="margin-top:12px;font-size:13px;color:var(--muted)">No account? <a href="#" onclick="switchModal('signup')" style="color:var(--accent)">Sign up</a></p>
+</div></div>
+
+<div class="modal" id="signupModal"><div class="modal-box">
+  <h2>Sign up</h2>
+  <input class="input" id="regName" placeholder="Name (optional)">
+  <input class="input" id="regEmail" type="email" placeholder="Email">
+  <input class="input" id="regPass" type="password" placeholder="Password">
+  <button class="btn btn-primary" style="width:100%" onclick="doRegister()">Create account</button>
+  <p style="margin-top:12px;font-size:13px;color:var(--muted)">Have an account? <a href="#" onclick="switchModal('login')" style="color:var(--accent)">Log in</a></p>
+</div></div>
+
 <div class="toast" id="toast"></div>
+
 <script>
-let mode='signup';
-function openModal(m){mode=m;document.getElementById('authModal').classList.add('open');document.getElementById('mTitle').textContent=m==='signup'?'Sign up':'Log in';document.getElementById('mBtn').textContent=m==='signup'?'Sign up':'Log in';document.getElementById('mName').style.display=m==='signup'?'block':'none';document.getElementById('mSwitch').textContent=m==='signup'?'Have an account?':"Don't have an account?";document.getElementById('mSwitchLink').textContent=m==='signup'?'Log in':'Sign up'}
-function closeModal(){document.getElementById('authModal').classList.remove('open')}
-function switchMode(){openModal(mode==='signup'?'login':'signup')}
-function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',3000)}
-function toggleDrop(){document.getElementById('uDrop').classList.toggle('open')}
-document.addEventListener('click',e=>{if(!e.target.closest('.user-menu'))document.getElementById('uDrop').classList.remove('open')})
-async function auth(e){e.preventDefault();const d=new FormData(e.target);const r=await(await fetch('/api/'+(mode==='signup'?'register':'login'),{method:'POST',body:JSON.stringify(Object.fromEntries(d)),headers:{'Content-Type':'application/json'}})).json();if(r.status==='ok'){closeModal();toast(mode==='signup'?'Account created!':'Welcome!');setTimeout(()=>location.reload(),800)}else toast(r.detail||'Error')}
-async function logout(){await fetch('/api/logout',{method:'POST'});location.reload()}
-(async()=>{try{const r=await fetch('/api/me');if(r.ok){const d=await r.json();if(d.user){document.getElementById('guestBtns').style.display='none';document.getElementById('userBtns').style.display='flex';const n=d.user.name||d.user.email.split('@')[0];document.getElementById('uName').textContent=n;document.getElementById('uAv').textContent=n[0].toUpperCase()}}}catch(e){}})()
+function $(id){return document.getElementById(id)}
+function show(t){$('toast').textContent=t;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),3000)}
+function openModal(m){$('loginModal').classList.remove('open');$('signupModal').classList.remove('open');$(m+'Modal').classList.add('open')}
+function switchModal(m){openModal(m)}
+document.querySelectorAll('.modal').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')})})
+
+function api(method,path,data){
+  return new Promise(function(resolve,reject){
+    var xhr=new XMLHttpRequest();
+    xhr.open(method,path,true);
+    xhr.setRequestHeader('Content-Type','application/json');
+    xhr.withCredentials=true;
+    xhr.onload=function(){try{resolve(JSON.parse(xhr.responseText))}catch(e){resolve(xhr.responseText)}};
+    xhr.onerror=function(){reject(new Error('Network error'))};
+    xhr.send(data?JSON.stringify(data):null);
+  });
+}
+
+async function doRegister(){
+  var data={email:$('regEmail').value,password:$('regPass').value,name:$('regName').value};
+  if(!data.email||!data.password)return show('Fill in all fields');
+  try{
+    var r=await api('POST','/api/register',data);
+    if(r.status==='ok'){show('Account created!');location.reload()}
+    else show(r.detail||'Error');
+  }catch(e){show('Error: '+e.message)}
+}
+
+async function doLogin(){
+  var data={email:$('loginEmail').value,password:$('loginPass').value};
+  if(!data.email||!data.password)return show('Fill in all fields');
+  try{
+    var r=await api('POST','/api/login',data);
+    if(r.status==='ok'){show('Logged in!');location.reload()}
+    else show(r.detail||'Invalid credentials');
+  }catch(e){show('Error: '+e.message)}
+}
+
+async function logout(){
+  await api('POST','/api/logout',{});
+  location.reload();
+}
+
+// Check auth on load
+(async function(){
+  try{
+    var r=await api('GET','/api/me');
+    if(r.user){
+      $('nav').style.display='none';
+      $('userNav').style.display='flex';
+      $('userNav').style.alignItems='center';
+      $('userPlan').textContent=r.user.plan;
+    }
+  }catch(e){}
+})();
 </script>
-</body></html>
+</body>
+</html>
