@@ -7,7 +7,8 @@ import hashlib, secrets, os, sqlite3, json, datetime
 app = FastAPI(title="MCP Hub")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-DB = "/tmp/mcp_hub_v5.db" if os.path.exists("/tmp") else "app.db"
+import tempfile
+DB = os.path.join(tempfile.gettempdir(), "mcp_hub_v5.db") if os.path.exists(tempfile.gettempdir()) else "app.db"
 
 # ── Database ──────────────────────────────────────────────
 def db():
