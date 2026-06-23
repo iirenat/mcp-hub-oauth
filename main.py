@@ -113,14 +113,21 @@ async def reg(req: Reg, resp: Response):
 
 @app.post("/api/login")
 async def log(req: Log, resp: Response):
-    r = db().execute("SELECT * FROM users WHERE email=?", (req.email,)).fetchone()
-    if not r or r["password"] != hashlib.sha256(req.password.encode()).hexdigest():
-        raise HTTPException(401, "Invalid email or password")
-    tok = secrets.token_hex(32)
-    db().execute("INSERT INTO sessions (token,user_id,expires_at) VALUES (?,?,datetime('now','+30 days'))", (tok, r["id"]))
-    resp.set_cookie("sess", tok, httponly=True, max_age=30*24*3600, samesite="lax")
-    log_action(r["id"], "login")
-    return {"status": "ok", "user": {"email": r["email"], "name": r["name"], "plan": r["plan"]}}
+    try:
+        d = db()
+        r = d.execute("SELECT * FROM users WHERE email=?", (req.email,)).fetchone()
+        d.close()
+        if not r or r["password"] != hashlib.sha256(req.password.encode()).hexdigest():
+            return {"error": "Invalid email or password"}
+        tok = secrets.token_hex(32)
+        d2 = db()
+        d2.execute("INSERT INTO sessions (token,user_id,expires_at) VALUES (?,?,datetime('now','+30 days'))", (tok, r["id"]))
+        d2.commit()
+        d2.close()
+        resp.set_cookie("sess", tok, httponly=True, max_age=30*24*3600, samesite="lax")
+        return {"status": "ok", "user": {"email": r["email"], "name": r["name"], "plan": r["plan"]}}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.post("/api/logout")
 async def out(req: Request, resp: Response):
