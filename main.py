@@ -94,21 +94,22 @@ async def health():
 # Auth
 @app.post("/api/register")
 async def reg(req: Reg, resp: Response):
-    uid = hashlib.md5(req.email.encode()).hexdigest()[:12]
-    pw = hashlib.sha256(req.password.encode()).hexdigest()
-    d = db()
     try:
+        uid = hashlib.md5(req.email.encode()).hexdigest()[:12]
+        pw = hashlib.sha256(req.password.encode()).hexdigest()
+        d = db()
         d.execute("INSERT INTO users (id,email,password,name) VALUES (?,?,?,?)", (uid, req.email, pw, req.name))
         d.commit()
-    except Exception as e:
         d.close()
-        raise HTTPException(400, "Email already registered")
-    d.close()
-    tok = secrets.token_hex(32)
-    db().execute("INSERT INTO sessions (token,user_id,expires_at) VALUES (?,?,datetime('now','+30 days'))", (tok, uid))
-    resp.set_cookie("sess", tok, httponly=True, max_age=30*24*3600, samesite="lax")
-    log_action(uid, "register")
-    return {"status": "ok", "user": {"email": req.email, "name": req.name, "plan": "free"}}
+        tok = secrets.token_hex(32)
+        d2 = db()
+        d2.execute("INSERT INTO sessions (token,user_id,expires_at) VALUES (?,?,datetime('now','+30 days'))", (tok, uid))
+        d2.commit()
+        d2.close()
+        resp.set_cookie("sess", tok, httponly=True, max_age=30*24*3600, samesite="lax")
+        return {"status": "ok", "user": {"email": req.email, "name": req.name, "plan": "free"}}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.post("/api/login")
 async def log(req: Log, resp: Response):
