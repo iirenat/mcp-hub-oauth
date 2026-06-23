@@ -167,19 +167,23 @@ async def list_agents(req: Request):
 
 @app.post("/api/agents")
 async def create_agent(req: AgentCreate, request: Request):
-    u = get_user(request)
-    if not u: raise HTTPException(401)
-    # Plan limits
-    count = db().execute("SELECT COUNT(*) FROM agents WHERE user_id=?", (u["id"],)).fetchone()[0]
-    limits = {"free": 1, "pro": 10, "enterprise": 100}
-    limit = limits.get(u["plan"], 1)
-    if count >= limit:
-        raise HTTPException(403, f"Plan '{u['plan']}' limited to {limit} agents. Upgrade for more.")
-    aid = secrets.token_hex(8)
-    db().execute("INSERT INTO agents (id,user_id,name,type) VALUES (?,?,?,?)", (aid, u["id"], req.name, req.type))
-    db().commit()
-    log_action(u["id"], "agent_create", req.name)
-    return {"id": aid, "name": req.name, "type": req.type, "status": "active"}
+    try:
+        u = get_user(request)
+        if not u: return {"error": "Unauthorized"}
+        d = db()
+        count = d.execute("SELECT COUNT(*) FROM agents WHERE user_id=?", (u["id"],)).fetchone()[0]
+        limits = {"free": 1, "pro": 10, "enterprise": 100}
+        limit = limits.get(u["plan"], 1)
+        if count >= limit:
+            d.close()
+            return {"error": f"Plan '{u['plan']}' limited to {limit} agents"}
+        aid = secrets.token_hex(8)
+        d.execute("INSERT INTO agents (id,user_id,name,type) VALUES (?,?,?,?)", (aid, u["id"], req.name, req.type))
+        d.commit()
+        d.close()
+        return {"id": aid, "name": req.name, "type": req.type, "status": "active"}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.delete("/api/agents/{aid}")
 async def delete_agent(aid: str, req: Request):

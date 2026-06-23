@@ -179,8 +179,8 @@ async function doRegister(){
   if(!data.email||!data.password)return show('Fill in all fields');
   try{
     var r=await api('POST','/api/register',data);
-    if(r.status==='ok'){show('Account created!');location.reload()}
-    else show(r.detail||'Error');
+    if(r.status==='ok'){show('Account created! Redirecting...');setTimeout(()=>window.location.href='/dashboard',1500)}
+    else show(r.detail||r.error||'Error');
   }catch(e){show('Error: '+e.message)}
 }
 
